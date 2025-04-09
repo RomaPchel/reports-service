@@ -1,0 +1,12 @@
+version: "3.9"
+services:
+  db:
+    image: postgres:latest
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: 37qJKh5PlOGo
+      POSTGRES_DB: diploma
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./initial-docker-run.sql:/docker-entrypoint-initdb.d/initial-docker-run.sql
