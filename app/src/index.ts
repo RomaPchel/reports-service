@@ -4,10 +4,11 @@ import {
   AuthMiddleware,
   CookiesMiddleware,
   Database,
-  ErrorMiddleware, Log,
-  ValidationMiddleware
+  ErrorMiddleware,
+  Log,
+  PubSubWrapper,
+  ValidationMiddleware,
 } from "markly-ts-core";
-import {PubSubWrapper} from "./lib/classes/PubSub.js";
 import {ReportsService} from "./lib/services/ReportsService.js";
 import type {ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import {ReportQueueService} from "./lib/services/ReportsQueueService.js";
@@ -24,7 +25,7 @@ await database.orm.connect().then(() => {
 const reportsService = new ReportsService();
 const reportQueue = ReportQueueService.getInstance();
 
-PubSubWrapper.subscribe<ReportScheduleRequest>("report-sub", async (data)=> {
+PubSubWrapper.subscribe<ReportScheduleRequest>("report-sub", async (data: ReportScheduleRequest)=> {
   logger.info(`Received message to topic report-sub`);
 
   await reportsService.scheduleReport(data)
@@ -36,8 +37,8 @@ app.use(AuthMiddleware());
 app.use(ErrorMiddleware());
 app.use(ValidationMiddleware());
 
-app.listen(3000, () => {
-  logger.info(`Auth server is running at ${3000}`);
+app.listen(3030, () => {
+  logger.info(`Auth server is running at ${3030}`);
 });
 
 process.on('SIGINT', async () => {

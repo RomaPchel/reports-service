@@ -36,8 +36,8 @@ export class ReportsService {
       const job: Job = await queue.scheduleReport(
           {
               ...scheduleOption,
-              organizationUuid: scheduleOption.organizationUuid,
-              accountId: client?.name,
+              organizationUuid: client.organization.uuid,
+              accountId: client?.accountId,
               reviewNeeded: scheduleOption.reviewNeeded,
               dataPreset: scheduleOption.datePreset
           },

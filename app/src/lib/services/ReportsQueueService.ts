@@ -13,7 +13,7 @@ export class ReportQueueService {
             'report-queue',
             RedisClient.getInstance().duplicate(),
             {
-                'generate-report': this.generateReportJob.bind(this)
+                'generate-report': this.generateReportJob.bind(this),
             }
         );
     }
@@ -26,41 +26,54 @@ export class ReportQueueService {
     }
 
     private async generateReportJob(data: ReportJobData): Promise<void> {
-        await ReportsUtil.processScheduledReportJob(data);
+        try {
+            await ReportsUtil.processScheduledReportJob(data);
+        } catch (err) {
+            // console.error(`Failed report job (ID: ${job.id}) on attempt ${job.attemptsMade + 1}:`, err);
+            throw err;
+        }
     }
 
-    public async getAllJobs(): Promise<void> {
-        return this.queue.listScheduledJobs()
+    public async getAllJobs(): Promise<Job[]> {
+        return await this.queue.listScheduledJobs();
     }
 
     public async scheduleReport(data: ReportJobData, cron: string): Promise<Job> {
-        return await this.queue.addScheduledJob('generate-report', data, cron);
+        return await this.queue.addScheduledJob('generate-report', data, cron, {
+            attempts: 5,
+            backoff: {
+                type: 'exponential',
+                delay: 30_000,
+            },
+        });
     }
 
     public async enqueueReport(data: ReportJobData): Promise<Job> {
-        return await this.queue.addJob('generate-report', data);
+        return await this.queue.addJob('generate-report', data, {
+            attempts: 3,
+            backoff: {
+                type: 'exponential',
+                delay: 20_000,
+            },
+        });
     }
 
     public async deleteAllJobs(): Promise<void> {
         const repeatableJobs = await this.queue.listScheduledJobs();
-
         for (const job of repeatableJobs) {
             await this.queue.removeScheduledJob(job.key);
         }
         await this.queue.drainAndClean();
     }
 
-    // Expose a method to get a job by ID.
     public async getJob(jobId: string): Promise<Job | null> {
         return await this.queue.getJob(jobId);
     }
 
-    // Remove a specific job by its ID.
     public async removeJob(jobId: string): Promise<void> {
         await this.queue.removeJob(jobId);
     }
 
-    // Close all BullMQ resources.
     public async close(): Promise<void> {
         await this.queue.close();
     }
