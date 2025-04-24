@@ -61,13 +61,3 @@ process.on("SIGINT", async () => {
   await database.orm.close();
   process.exit(0);
 });
-
-
-
-// await ReportsUtil.processScheduledReportJob({
-//   clientUuid: "71697354-adee-4831-a4cc-2620bdf92f26",
-//   accountId: "act_1083076062681667",
-//   dataPreset: FACEBOOK_DATE_PRESETS.LAST_7D,
-//   reviewNeeded: false,
-//   organizationUuid: "1504759b-fd72-4f4a-98dc-956908f9e212"
-// });
