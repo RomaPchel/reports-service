@@ -3,6 +3,38 @@ import { Database, OrganizationToken } from "markly-ts-core";
 
 const database = await Database.getInstance();
 
+export const FacebookMetricPresets = {
+  kpis: [
+    'account_name',
+    'account_id',
+    'spend',
+    'impressions',
+    'clicks',
+    'cpc',
+    'ctr',
+    'actions',
+    'action_values',
+    'purchase_roas',
+    'reach',
+  ],
+  adPerformance: [
+    'id',
+    'name',
+    'status',
+    'creative{id}',
+    'insights.date_preset(last_7d){impressions,clicks,spend,actions{action_type,value},purchase_roas{action_type,value}}'
+  ],
+  campaigns: [
+    'campaign_id',
+    'campaign_name',
+    'spend',
+    'impressions',
+    'clicks',
+    'ctr',
+    'actions'
+  ],
+};
+
 export class FacebookApi {
   private api: AxiosInstance;
 
@@ -33,7 +65,7 @@ export class FacebookApi {
     return new FacebookApi(tokenRecord.token, accountId);
   }
 
-  private async batchRequest(batch: any[]) {
+  private async batchRequest(batch: { method: string; relative_url: string }[]) {
     const res = await this.api.post("/", null, {
       params: {
         batch: JSON.stringify(batch),
@@ -42,19 +74,26 @@ export class FacebookApi {
     return res.data.map((item: any) => JSON.parse(item.body));
   }
 
-  public async getAdAccountInfo() {
+  public async getEntitiesBatch(entityIds: string[], fields: string[]) {
+    const batch = entityIds.map((id) => ({
+      method: "GET",
+      relative_url: `${id}?fields=${fields.join(",")}`,
+    }));
+    return await this.batchRequest(batch);
+  }
+
+  public async getAdAccountInfo(fields: string[] = ['name', 'id', 'account_status', 'business', 'timezone_name']) {
     const res = await this.api.get(`${this.accountId}`, {
-      params: { fields: "name,id,account_status,business,timezone_name" },
+      params: { fields: fields.join(",") },
     });
     return res.data;
   }
 
-  public async getCampaigns(datePreset: string) {
+  public async getCampaigns(datePreset: string = 'last_7d', fields: string[] = FacebookMetricPresets.campaigns) {
     const res = await this.api.get(`${this.accountId}/insights`, {
       params: {
         date_preset: datePreset,
-        fields:
-            "campaign_name,actions,clicks{outbound_clicks,all_clicks},spend,purchase_roas,website_purchase_roas,action_values{add_to_cart}",
+        fields: fields.join(","),
         level: "campaign",
         limit: 1000,
       },
@@ -62,112 +101,105 @@ export class FacebookApi {
     return res.data.data as any[];
   }
 
-  public async getAdSets() {
+  public async getAdSets(fields: string[] = ['id', 'name', 'status', 'campaign_id', 'budget_remaining', 'targeting']) {
     const res = await this.api.get(`${this.accountId}/adsets`, {
       params: {
-        fields: "id,name,status,campaign_id,budget_remaining,targeting",
+        fields: fields.join(","),
       },
     });
     return res.data;
   }
 
-  public async getAds(datePreset = "last_7d") {
+  public async getAds(datePreset = "last_7d", fields: string[] = FacebookMetricPresets.adPerformance) {
     const res = await this.api.get(`${this.accountId}/ads`, {
       params: {
+        date_preset: datePreset,
+        fields: fields.join(","),
+        limit: 1000,
         __cppo: 1,
         action_breakdowns: "action_type",
-        fields:
-            "id,creative{id},insights.date_preset(" +
-            datePreset +
-            "){impressions,clicks,spend,actions{action_type,value},action_values{action_type,value},purchase_roas{action_type,value}}",
-        limit: 1000,
       },
     });
     return res.data;
   }
 
-  public async getAccountInsights(datePreset = "last_7d") {
+  public async getAccountInsights(datePreset = "last_7d", fields: string[] = FacebookMetricPresets.kpis) {
     const res = await this.api.get(`${this.accountId}/insights`, {
       params: {
         date_preset: datePreset,
-        fields:
-            "account_name,account_id,spend,impressions,clicks,cpc,ctr,actions,action_values,purchase_roas,reach",
+        fields: fields.join(","),
+        level: "account",
       },
     });
     return res.data.data as any[];
   }
 
-  public async getCampaignInsights(datePreset = "last_7d") {
+  public async getCampaignInsights(datePreset = "last_7d", fields: string[] = FacebookMetricPresets.campaigns) {
     const res = await this.api.get(`${this.accountId}/insights`, {
       params: {
         level: "campaign",
         date_preset: datePreset,
-        fields:
-            "campaign_id,campaign_name,spend,impressions,clicks,ctr,actions",
+        fields: fields.join(","),
       },
     });
     return res.data.data as any[];
   }
 
-  public async getAdSetInsights(datePreset = "last_7d") {
+  public async getAdSetInsights(fields: string[] = ['adset_id', 'adset_name', 'spend', 'impressions', 'reach', 'frequency', 'actions'], datePreset = "last_7d") {
     const res = await this.api.get(`${this.accountId}/insights`, {
       params: {
         level: "adset",
         date_preset: datePreset,
-        fields: "adset_id,adset_name,spend,impressions,reach,frequency,actions",
+        fields: fields.join(","),
       },
     });
     return res.data;
   }
 
   public async getCreativeAssetsBatch(creativeIds: string[]) {
-    const batch = creativeIds.map((id) => ({
-      method: "GET",
-      relative_url: `${id}?fields=id,effective_instagram_media_id,effective_object_story_id,thumbnail_url,instagram_permalink_url`,
-    }));
-    return await this.batchRequest(batch);
+    return await this.getEntitiesBatch(creativeIds, [
+      'id',
+      'effective_instagram_media_id',
+      'effective_object_story_id',
+      'thumbnail_url',
+      'instagram_permalink_url'
+    ]);
   }
 
   public async getInstagramMediaBatch(mediaIds: string[]) {
-    const batch = mediaIds.map((id) => ({
-      method: "GET",
-      relative_url: `${id}?fields=media_url,permalink,thumbnail_url,media_type`,
-    }));
-    return await this.batchRequest(batch);
+    return await this.getEntitiesBatch(mediaIds, [
+      'media_url',
+      'permalink',
+      'thumbnail_url',
+      'media_type'
+    ]);
   }
 
-  public async getAdCreatives() {
+  public async getAdCreatives(fields: string[] = ['id', 'name', 'object_story_id', 'thumbnail_url', 'effective_object_story_id']) {
     const res = await this.api.get(`${this.accountId}/adcreatives`, {
-      params: {
-        fields: "id,name,object_story_id,thumbnail_url,effective_object_story_id",
-      },
+      params: { fields: fields.join(",") },
     });
     return res.data;
   }
 
-  public async getCreativeAsset(creativeId: string) {
+  public async getCreativeAsset(creativeId: string, fields: string[] = ['id', 'image_url', 'thumbnail_url', 'instagram_permalink_url', 'effective_object_story_id']) {
     const res = await this.api.get(`${creativeId}`, {
-      params: {
-        fields:
-            "id,image_url,image_hash,creative_sourcing_spec,video_id,playable_asset_id,object_id,thumbnail_url,instagram_permalink_url,effective_instagram_media_id,effective_object_story_id",
-      },
+      params: { fields: fields.join(",") },
     });
     return res.data;
   }
 
-  public async getInstagramMedia(mediaId: string) {
+  public async getInstagramMedia(mediaId: string, fields: string[] = ['media_url', 'permalink', 'thumbnail_url', 'media_type']) {
     const res = await this.api.get(`${mediaId}`, {
-      params: {
-        fields: "media_url,permalink,thumbnail_url,media_type",
-      },
+      params: { fields: fields.join(",") },
     });
     return res.data;
   }
 
-  public async getPost(postId: string) {
+  public async getPost(postId: string, fields: string[] = ['id', 'permalink_url', 'picture', 'created_time']) {
     const res = await this.api.get(`${postId}`, {
       params: {
-        fields: ["id", "permalink_url", "picture", "created_time"].join(","),
+        fields: fields.join(","),
         thumbnail_height: 1080,
         thumbnail_width: 1080,
       },
@@ -205,9 +237,7 @@ export class FacebookApi {
 
   public async getUserAdAccounts() {
     const res = await this.api.get(`/me/adaccounts`, {
-      params: {
-        fields: "id,name",
-      },
+      params: { fields: "id,name" },
     });
     return res.data;
   }
@@ -231,9 +261,7 @@ export class FacebookApi {
 
   public async getProfile() {
     const res = await this.api.get(`/me`, {
-      params: {
-        fields: "id,name,email,picture",
-      },
+      params: { fields: "id,name,email,picture" },
     });
     return res.data;
   }

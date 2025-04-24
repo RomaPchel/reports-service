@@ -3,10 +3,11 @@ import {
   Database, GCSWrapper,
   Log,
   OrganizationClient, PubSubWrapper,
-  SchedulingOption,
+  SchedulingOption, Report
 } from "markly-ts-core";
 import type {ReportJobData, ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import puppeteer from "puppeteer";
+import {FacebookDataUtil} from "./FacebookDataUtil.js";
 
 const logger: Log = Log.getInstance().extend("reports-util");
 const database = await Database.getInstance();
@@ -29,40 +30,57 @@ export class ReportsUtil {
         return {success: false};
       }
 
-      // const report = await FacebookDataUtil.getAllReportData(
-      //     data.organizationUuid,
-      //     client.accountId,
-      //     data.dataPreset
-      // );
+      const reportData = await FacebookDataUtil.getAllReportData(
+          data.organizationUuid,
+          client.accountId,
+          data.dataPreset
+      );
+
+      const report = database.em.create(Report, {
+        organization: client.organization,
+        client: client,
+        reportType: 'facebook',
+        gcsUrl: "",
+        data: reportData,
+        metadata: {
+          datePreset: data.dataPreset,
+          reviewNeeded: data.reviewNeeded,
+        },
+      });
+
+      database.em.persist(report);
+      await database.em.flush();
 
       await this.updateLastRun(client.uuid);
 
-      const pdfBuffer = await this.generateReportPdf("");
+      const pdfBuffer = await this.generateReportPdf(report.uuid);
+
       const filePath = this.generateFilePath(client.uuid, data.dataPreset);
       const gcs = GCSWrapper.getInstance('marklie-client-reports');
 
-      const path = `report/${client.uuid}-facebook-report-${data.dataPreset}-${new Date().toISOString().split("T")[0]}.pdf`
-
-      await gcs.uploadBuffer(
+      const publicUrl = await gcs.uploadBuffer(
           pdfBuffer,
-          path,
+          filePath,
           'application/pdf',
           false,
           true
       );
 
-      if (!data.reviewNeeded) {
-        await PubSubWrapper.publishMessage("notification-send-report", {
-          reportUrl: filePath,
-          clientUuid: client.uuid
-        });
-      } else {
-        await PubSubWrapper.publishMessage("notification-report-ready", {
-          organizationUuid: data.organizationUuid,
-          reportUrl: filePath,
-          clientUuid: client.uuid
-        });
-      }
+      report.gcsUrl = publicUrl;
+      await database.em.flush();
+
+      const payload = {
+        reportUrl: publicUrl,
+        clientUuid: client.uuid,
+        organizationUuid: client.organization.uuid,
+        reportId: report.uuid,
+      };
+
+      const topic = data.reviewNeeded
+          ? "notification-report-ready"
+          : "notification-send-report";
+
+      await PubSubWrapper.publishMessage(topic, payload);
 
       return { success: true };
     } catch (e) {

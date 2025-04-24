@@ -16,12 +16,13 @@
     "start:dev": "npm run watch"
   },
   "dependencies": {
+    "@koa/cors": "^5.0.0",
     "axios": "^1.8.4",
     "bullmq": "^5.48.1",
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "luxon": "^3.6.1",
-    "markly-ts-core": "1.1.3",
+    "markly-ts-core": "1.1.5",
     "puppeteer": "^24.6.1",
     "winston": "^3.17.0",
     "zod": "^3.24.2"
@@ -34,6 +35,7 @@
     "@types/koa": "^2.13.5",
     "@types/koa-bodyparser": "^4.3.12",
     "@types/koa-router": "^7.4.4",
+    "@types/koa__cors": "^5.0.0",
     "@types/luxon": "^3.6.2",
     "@types/node": "^22.10.10",
     "bcrypt": "^5.1.1",

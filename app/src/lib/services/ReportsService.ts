@@ -3,10 +3,9 @@ import { ReportsUtil } from "../utils/ReportsUtil.js";
 import {
   Database,
   OrganizationClient,
-  SchedulingOption,} from "markly-ts-core";
+  SchedulingOption, Report} from "markly-ts-core";
 import type {ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import {CronUtil} from "../utils/CronUtil.js";
-import {FacebookDataUtil} from "../utils/FacebookDataUtil.js";
 import {ReportQueueService} from "./ReportsQueueService.js";
 
 const database = await Database.getInstance();
@@ -58,14 +57,8 @@ export class ReportsService {
   }
 
   async getReport(
-    organizationUuid: string,
-    accountId: string,
-    datePreset: string,
+    uuid: string,
   ) {
-    return await FacebookDataUtil.getAllReportData(
-      organizationUuid,
-      accountId,
-      datePreset,
-    );
+    return database.em.findOne(Report, {uuid: uuid});
   }
 }
