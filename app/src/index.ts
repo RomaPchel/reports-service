@@ -7,11 +7,8 @@ import {
   Database,
   ErrorMiddleware,
   Log,
-  PubSubWrapper,
   ValidationMiddleware,
 } from "markly-ts-core";
-import { ReportsService } from "./lib/services/ReportsService.js";
-import type { ReportScheduleRequest } from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import { ReportQueueService } from "./lib/services/ReportsQueueService.js";
 import {ReportsController} from "./lib/controllers/ReportsController.js";
 
@@ -24,17 +21,8 @@ await database.orm.connect().then(() => {
   logger.info("Database has connected!");
 });
 
-const reportsService = new ReportsService();
 const reportQueue = ReportQueueService.getInstance();
 
-PubSubWrapper.subscribe<ReportScheduleRequest>(
-  "report-sub",
-  async (data: ReportScheduleRequest) => {
-    logger.info(`Received message to topic report-sub`);
-
-    await reportsService.scheduleReport(data);
-  },
-);
 app.use(
     cors({
       origin: "http://localhost:4200",
