@@ -3,8 +3,8 @@ import { ReportsUtil } from "../utils/ReportsUtil.js";
 import {
   Database,
   OrganizationClient,
-  SchedulingOption, Report} from "markly-ts-core";
-import type {ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+  SchedulingOption, Report} from "marklie-ts-core";
+import type {ReportScheduleRequest} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import {CronUtil} from "../utils/CronUtil.js";
 import {ReportQueueService} from "./ReportsQueueService.js";
 

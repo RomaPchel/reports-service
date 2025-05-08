@@ -9,11 +9,12 @@ import {
   Log,
   PubSubWrapper,
   ValidationMiddleware,
-} from "markly-ts-core";
+} from "marklie-ts-core";
 import { ReportsService } from "./lib/services/ReportsService.js";
-import type { ReportScheduleRequest } from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+import type { ReportScheduleRequest } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import { ReportQueueService } from "./lib/services/ReportsQueueService.js";
 import {ReportsController} from "./lib/controllers/ReportsController.js";
+import { OpenAiWrapper } from "lib/classes/OpenAiWrapper.js";
 
 const app = new Koa();
 const logger = Log.getInstance().extend("service");

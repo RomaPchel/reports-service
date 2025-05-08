@@ -4,8 +4,8 @@ import {
   Log,
   OrganizationClient, PubSubWrapper,
   SchedulingOption, Report
-} from "markly-ts-core";
-import type {ReportJobData, ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+} from "marklie-ts-core";
+import type {ReportJobData, ReportScheduleRequest} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import puppeteer from "puppeteer";
 import {FacebookDataUtil} from "./FacebookDataUtil.js";
 

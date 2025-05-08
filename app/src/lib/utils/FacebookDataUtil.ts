@@ -1,7 +1,7 @@
 import type {
   AccountHierarchy,
   Root,
-} from "markly-ts-core/dist/lib/interfaces/FacebookInterfaces.js";
+} from "marklie-ts-core/dist/lib/interfaces/FacebookInterfaces.js";
 import { FacebookApi } from "../apis/FacebookApi.js";
 
 export class FacebookDataUtil {
@@ -194,20 +194,5 @@ export class FacebookDataUtil {
       );
 
     return reportAds;
-  }
-
-  public static extractAccountHierarchy(root: Root): AccountHierarchy[] {
-    return root.data
-      .map((account) => ({
-        id: account.id,
-        name: account.name,
-        owned_ad_accounts: (account.owned_ad_accounts?.data || [])
-          .map((a) => ({ id: a.id, name: a.name }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        client_ad_accounts: (account.client_ad_accounts?.data || [])
-          .map((a) => ({ id: a.id, name: a.name }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
   }
 }

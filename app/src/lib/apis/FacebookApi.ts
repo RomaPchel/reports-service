@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
-import { Database, OrganizationToken } from "markly-ts-core";
+import { Database, OrganizationToken } from "marklie-ts-core";
 
 const database = await Database.getInstance();
 

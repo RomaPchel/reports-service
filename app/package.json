@@ -13,7 +13,8 @@
     "build:all": "npm run build && npm run generate:dts",
     "start": "node --env-file .env --experimental-specifier-resolution=node dist/index.js",
     "watch": "pnpm docker:up & npx nodemon --config ./nodemon.json",
-    "start:dev": "npm run watch"
+    "start:dev": "npm run watch",
+    "update:core": "pnpm store prune && cd .. && cd .. && cd markly-ts-core && npm run build && pnpm pack && cd .. && cd reports-service && cd app && pnpm i ../../markly-ts-core/marklie-ts-core-1.1.10.tgz && npm run start:dev"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",
@@ -22,7 +23,8 @@
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "luxon": "^3.6.1",
-    "markly-ts-core": "1.1.5",
+    "marklie-ts-core": "file:../../markly-ts-core/marklie-ts-core-1.1.10.tgz",
+    "openai": "^4.97.0",
     "puppeteer": "^24.6.1",
     "winston": "^3.17.0",
     "zod": "^3.24.2"
