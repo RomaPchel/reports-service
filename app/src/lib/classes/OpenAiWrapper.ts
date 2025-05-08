@@ -2,10 +2,8 @@ import OpenAI from "openai";
 
 export class OpenAiWrapper {
     private client!: OpenAI;
-    private reportData: any;
 
-    constructor(reportData: any) {
-        this.reportData = reportData;
+    constructor() {
         this.setUpClient();
     }
 
@@ -15,8 +13,8 @@ export class OpenAiWrapper {
         });
     }
 
-    public async generatePerformanceSummary(): Promise<string> {
-        const prompt = this.constructPrompt(this.reportData);
+    public async generatePerformanceSummary(reportData: any): Promise<string> {
+        const prompt = this.constructPrompt(reportData);
         
         try {
             const response = await this.client.chat.completions.create({
