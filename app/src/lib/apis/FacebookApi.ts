@@ -1,5 +1,5 @@
 import axios, { type AxiosInstance } from "axios";
-import { Database, OrganizationToken } from "markly-ts-core";
+import { Database, OrganizationToken } from "marklie-ts-core";
 
 const database = await Database.getInstance();
 
@@ -111,16 +111,16 @@ export class FacebookApi {
   }
 
   public async getAds(datePreset = "last_7d", fields: string[] = FacebookMetricPresets.adPerformance) {
-    const res = await this.api.get(`${this.accountId}/ads`, {
-      params: {
-        date_preset: datePreset,
-        fields: fields.join(","),
-        limit: 1000,
-        __cppo: 1,
-        action_breakdowns: "action_type",
-      },
-    });
-    return res.data;
+     const res = await this.api.get(`${this.accountId}/ads`, {
+       params: {
+         date_preset: datePreset,
+         fields: fields.join(","),
+         limit: 1000,
+         __cppo: 1,
+         action_breakdowns: "action_type",
+       },
+     });
+     return res.data;
   }
 
   public async getAccountInsights(datePreset = "last_7d", fields: string[] = FacebookMetricPresets.kpis) {
@@ -183,10 +183,10 @@ export class FacebookApi {
   }
 
   public async getCreativeAsset(creativeId: string, fields: string[] = ['id', 'image_url', 'thumbnail_url', 'instagram_permalink_url', 'effective_object_story_id']) {
-    const res = await this.api.get(`${creativeId}`, {
-      params: { fields: fields.join(",") },
-    });
-    return res.data;
+     const res = await this.api.get(`${creativeId}`, {
+       params: { fields: fields.join(",") },
+     });
+     return res.data;
   }
 
   public async getInstagramMedia(mediaId: string, fields: string[] = ['media_url', 'permalink', 'thumbnail_url', 'media_type']) {
@@ -196,10 +196,13 @@ export class FacebookApi {
     return res.data;
   }
 
-  public async getPost(postId: string, fields: string[] = ['id', 'permalink_url', 'picture', 'created_time']) {
-    const res = await this.api.get(`${postId}`, {
+  public async getPost(postId: string) {
+    const res = await this.api.get(`${this.accountId}`, {
       params: {
-        fields: fields.join(","),
+        fields:
+            "id,name,adcreatives.limit(1){effective_object_story_id,name,thumbnail_url,authorization_category,instagram_permalink_url}",
+        search: postId,
+        limit: 1,
         thumbnail_height: 1080,
         thumbnail_width: 1080,
       },

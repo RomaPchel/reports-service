@@ -4,10 +4,11 @@ import {
   Log,
   OrganizationClient, PubSubWrapper,
   SchedulingOption, Report
-} from "markly-ts-core";
-import type {ReportJobData, ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+} from "marklie-ts-core";
+import type {ReportJobData, ReportScheduleRequest} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import puppeteer from "puppeteer";
 import {FacebookDataUtil} from "./FacebookDataUtil.js";
+import {ClientFacebookAdAccount} from "marklie-ts-core";
 
 const logger: Log = Log.getInstance().extend("reports-util");
 const database = await Database.getInstance();
@@ -30,18 +31,31 @@ export class ReportsUtil {
         return {success: false};
       }
 
-      const reportData = await FacebookDataUtil.getAllReportData(
-          data.organizationUuid,
-          client.accountId,
-          data.dataPreset
-      );
+      const adAccounts: ClientFacebookAdAccount = await database.em.find(ClientFacebookAdAccount, {
+        client: data.clientUuid
+      });
+
+      const adAccountReports = []
+
+      for (const adAccount of adAccounts) {
+        const reportData = await FacebookDataUtil.getAllReportData(
+            data.organizationUuid,
+            adAccount.adAccountId,
+            data.dataPreset
+        );
+        adAccountReports.push({
+          adAccountId: adAccount.adAccountId,
+          ...reportData,
+        });
+      }
+
 
       const report = database.em.create(Report, {
         organization: client.organization,
         client: client,
         reportType: 'facebook',
         gcsUrl: "",
-        data: reportData,
+        data: adAccountReports,
         metadata: {
           datePreset: data.dataPreset,
           reviewNeeded: data.reviewNeeded,
@@ -63,7 +77,7 @@ export class ReportsUtil {
           filePath,
           'application/pdf',
           false,
-          true
+          false
       );
 
       report.gcsUrl = publicUrl;
@@ -89,6 +103,7 @@ export class ReportsUtil {
     }
   }
 
+  //todo:fix
   private static async updateLastRun(clientUuid: string) {
     const option = await database.em.findOne(SchedulingOption, {
       client: clientUuid,
@@ -198,14 +213,14 @@ export class ReportsUtil {
     return nextRun;
   }
 
-  private static async generateReportPdf(reportUuid: string): Promise<Buffer> {
+  public static async generateReportPdf(reportUuid: string): Promise<Buffer> {
     const browser = await puppeteer.launch({
       headless: true,
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();
-    await page.goto(`http://localhost:4200/report/${reportUuid}`);
+    await page.goto(`https://marklie.com/pdf-report/${reportUuid}`);
     await page.emulateMediaType('print');
 
     await new Promise(resolve => setTimeout(resolve, 2000));

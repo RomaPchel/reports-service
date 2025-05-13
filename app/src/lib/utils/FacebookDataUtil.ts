@@ -1,7 +1,3 @@
-import type {
-  AccountHierarchy,
-  Root,
-} from "markly-ts-core/dist/lib/interfaces/FacebookInterfaces.js";
 import { FacebookApi } from "../apis/FacebookApi.js";
 
 export class FacebookDataUtil {
@@ -13,22 +9,21 @@ export class FacebookDataUtil {
   ) {
       const api = await FacebookApi.create(organizationUuid, accountId);
 
-    const [ ads, KPIs, campaigns, graphs] = await Promise.all([
-      api.getAds(datePreset),
-      api.getAccountInsights(datePreset),
-      api.getCampaigns(datePreset),
-      api.getCampaignInsights(datePreset),
-    ]);
+      const [ ads, KPIs, campaigns, graphs] = await Promise.all([
+          api.getAds(datePreset),
+          api.getAccountInsights(datePreset),
+          api.getCampaigns(datePreset),
+          api.getCampaignInsights(datePreset),
+          ]);
 
+      const processedAds = await this.processAds(
+          ads.data,
+          organizationUuid,
+          accountId,
+      );
 
-    const processedAds = await this.processAds(
-      ads.data,
-      organizationUuid,
-      accountId,
-    );
-
-    return {  ads: processedAds, KPIs: this.normalizeKPIs(KPIs[0]), campaigns: this.normalizeCampaigns(campaigns), graphs: this.normalizeGraphs(graphs) };
-  }
+      return {  ads: processedAds, KPIs: this.normalizeKPIs(KPIs[0]), campaigns: this.normalizeCampaigns(campaigns), graphs: this.normalizeGraphs(graphs) };
+     }
 
   private static normalizeGraphs(graphs: any[]) {
       return graphs.map((g) => {
@@ -97,6 +92,10 @@ export class FacebookDataUtil {
   }
 
     private static normalizeKPIs(apiData: any) {
+
+      if (!apiData) {
+          return [];
+      }
         const getActionValue = (type: string) =>
             apiData.actions?.find((a: any) => a.action_type === type)?.value || 0;
 
@@ -137,8 +136,6 @@ export class FacebookDataUtil {
   ) {
     const shownAds = this.getBest10AdsByROAS(ads);
 
-    console.log(shownAds);
-
       const reportAds = shownAds.map((ad) => ({
           adCreativeId: ad.creative.id,
           thumbnailUrl: "",
@@ -161,6 +158,7 @@ export class FacebookDataUtil {
               return await api.getCreativeAsset(ad.creative.id);
           }),
       );
+      const api = await FacebookApi.create(organizationUuid, accountId);
 
       await Promise.all(
           creativeAssets.map(async (creativeAsset, index) => {
@@ -169,7 +167,6 @@ export class FacebookDataUtil {
               const reportAd = reportAds[index];
 
               if (effective_instagram_media_id) {
-                  const api = await FacebookApi.create(organizationUuid, accountId);
                   const igMedia = await api.getInstagramMedia(effective_instagram_media_id);
 
                   reportAd.thumbnailUrl =
@@ -178,36 +175,18 @@ export class FacebookDataUtil {
                           : igMedia.thumbnail_url;
                   reportAd.sourceUrl = igMedia.permalink;
               } else if(effective_object_story_id) {
-                  console.log("ASIDJPAOSIJHPDOAISDA")
                   const postId = effective_object_story_id.split("_")[1];
-                  const api = await FacebookApi.create(organizationUuid, accountId);
-                  const post = await api.getPost(postId);
-                  console.log(post);
+
+                  const post = await api.getPost(postId,);
+
                   reportAd.thumbnailUrl =
-                      post.full_picture ||
-                      post.picture ||
-                      "";
+                      post.adcreatives.data[0].thumbnail_url
 
                   reportAd.sourceUrl = post.permalink_url || "";
               }
-          }),
-      );
+          }))
 
-    return reportAds;
-  }
 
-  public static extractAccountHierarchy(root: Root): AccountHierarchy[] {
-    return root.data
-      .map((account) => ({
-        id: account.id,
-        name: account.name,
-        owned_ad_accounts: (account.owned_ad_accounts?.data || [])
-          .map((a) => ({ id: a.id, name: a.name }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-        client_ad_accounts: (account.client_ad_accounts?.data || [])
-          .map((a) => ({ id: a.id, name: a.name }))
-          .sort((a, b) => a.name.localeCompare(b.name)),
-      }))
-      .sort((a, b) => a.name.localeCompare(b.name));
+      return reportAds;
   }
 }

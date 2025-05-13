@@ -26,9 +26,9 @@ importers:
       luxon:
         specifier: ^3.6.1
         version: 3.6.1
-      markly-ts-core:
-        specifier: file:../../markly-ts-core/markly-ts-core-1.1.5.tgz
-        version: file:../../markly-ts-core/markly-ts-core-1.1.5.tgz
+      marklie-ts-core:
+        specifier: 1.1.13
+        version: 1.1.13
       puppeteer:
         specifier: ^24.6.1
         version: 24.6.1(typescript@5.7.3)
@@ -1674,9 +1674,8 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
-  markly-ts-core@file:../../markly-ts-core/markly-ts-core-1.1.5.tgz:
-    resolution: {integrity: sha512-Apqu0+DgqrHHs6NjYGey0LiDopA+0N3CRkdnpgKLp2ScZgmKbmE1etxlqa/5rOFgaBcsBu+xxiGcbjZo9rESkQ==, tarball: file:../../markly-ts-core/markly-ts-core-1.1.5.tgz}
-    version: 1.1.5
+  marklie-ts-core@1.1.13:
+    resolution: {integrity: sha512-IHjLB1kWj+pmoKVLD8HwIpgDwZ9u9aCrzKKXzZ0MlQN75FVM2gaNvIYKQdUwFg7poYVXfeMshhqus4euaHSheA==}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -1799,6 +1798,7 @@ packages:
   node-domexception@1.0.0:
     resolution: {integrity: sha512-/jKZoMpw0F8GRwl4/eLROPA3cfcXtLApP0QzLmUT/HuPCZWyB7IY9ZrMeKw2O/nFIqPQB3PVM9aYm0F312AXDQ==}
     engines: {node: '>=10.5.0'}
+    deprecated: Use your platform's native DOMException instead
 
   node-fetch@2.7.0:
     resolution: {integrity: sha512-c4FRfUm/dbcWZ7U+1Wq0AwCyFL+3nt2bEw05wfxSz+DWpWsitgmSgYmy2dQdWyKC1694ELPqMs/YzUSNozLt8A==}
@@ -4223,7 +4223,7 @@ snapshots:
     dependencies:
       semver: 7.5.4
 
-  markly-ts-core@file:../../markly-ts-core/markly-ts-core-1.1.5.tgz:
+  marklie-ts-core@1.1.13:
     dependencies:
       '@google-cloud/pubsub': 4.11.0
       '@google-cloud/secret-manager': 6.0.1
@@ -4236,6 +4236,7 @@ snapshots:
       bullmq: 5.48.1
       ioredis: 5.4.2
       jsonwebtoken: 9.0.2
+      path-to-regexp: 8.2.0
       uuid: 11.1.0
       winston: 3.17.0
       zod: 3.24.2
