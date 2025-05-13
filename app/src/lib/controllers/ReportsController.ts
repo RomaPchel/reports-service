@@ -1,8 +1,8 @@
 import Router from "koa-router";
 import type { Context } from "koa";
 import { ReportsService } from "../services/ReportsService.js";
-import {User} from "markly-ts-core";
-import type {ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+import {User} from "marklie-ts-core";
+import type {ReportScheduleRequest} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 
 export class ReportsController extends Router {
     private readonly reportsService: ReportsService;
@@ -30,11 +30,6 @@ export class ReportsController extends Router {
         const user: User = ctx.state.user as User;
         const scheduleOption: ReportScheduleRequest = ctx.request
             .body as ReportScheduleRequest;
-
-        console.log({
-            ...scheduleOption,
-            organizationUuid: user.activeOrganization.uuid,
-        })
 
         await this.reportsService.scheduleReport({
             ...scheduleOption,

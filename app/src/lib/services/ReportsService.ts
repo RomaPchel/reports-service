@@ -6,8 +6,8 @@ import {
   SchedulingOption,
   Report,
   Log,
-} from "markly-ts-core";
-import type {ReportScheduleRequest} from "markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+} from "marklie-ts-core";
+import type {ReportScheduleRequest} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import {CronUtil} from "../utils/CronUtil.js";
 import {ReportQueueService} from "./ReportsQueueService.js";
 
@@ -25,7 +25,7 @@ export class ReportsService {
               CronUtil.convertScheduleRequestToCron(scheduleOption);
 
           schedule.cronExpression =
-              CronUtil.convertScheduleRequestToCron(scheduleOption);
+              cronExpression
           schedule.client = database.em.getReference(
               OrganizationClient,
               scheduleOption.clientUuid,
@@ -47,8 +47,6 @@ export class ReportsService {
               },
               cronExpression,
           );
-
-          console.log(scheduleOption)
 
           //todo: add timezones
           schedule.reportType = scheduleOption.frequency;

@@ -2,13 +2,13 @@ import Koa from "koa";
 import koabodyparser from "koa-bodyparser";
 import cors from "@koa/cors";
 import {
-  AuthMiddleware,
-  CookiesMiddleware,
-  Database,
-  ErrorMiddleware,
-  Log,
-  ValidationMiddleware,
-} from "markly-ts-core";
+    AuthMiddleware,
+    CookiesMiddleware,
+    Database,
+    ErrorMiddleware,
+    Log,
+    ValidationMiddleware,
+} from "marklie-ts-core";
 import { ReportQueueService } from "./lib/services/ReportsQueueService.js";
 import {ReportsController} from "./lib/controllers/ReportsController.js";
 
@@ -31,9 +31,9 @@ app.use(
 );
 app.use(koabodyparser());
 app.use(CookiesMiddleware);
-app.use(AuthMiddleware());
-app.use(ErrorMiddleware());
+app.use(AuthMiddleware(["/reports"]));
 app.use(ValidationMiddleware());
+app.use(ErrorMiddleware());
 
 app
     .use(new ReportsController().routes())

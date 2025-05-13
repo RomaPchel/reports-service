@@ -1,6 +1,6 @@
-import { BullMQWrapper } from 'markly-ts-core';
-import { RedisClient } from 'markly-ts-core';
-import type { ReportJobData } from 'markly-ts-core/dist/lib/interfaces/ReportsInterfaces.js';
+import { BullMQWrapper } from 'marklie-ts-core';
+import { RedisClient } from 'marklie-ts-core';
+import type { ReportJobData } from 'marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js';
 import { ReportsUtil } from '../utils/ReportsUtil.js';
 import type { Job } from 'bullmq';
 
