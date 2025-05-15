@@ -9,7 +9,6 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PROJECT_ID: saas-452909
       REGION: europe-west4
       SERVICE_NAME: reports-service
       REPO_NAME: reports-service
@@ -17,14 +16,15 @@ jobs:
       REDIS_HOST: 10.x.x.x:6379
 
     steps:
+
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Google Cloud SDK
-        uses: google-github-actions/setup-gcloud@v1
+      - name: 'Set up Google Cloud SDK'
+        uses: google-github-actions/setup-gcloud@v4
         with:
-          project_id: ${{ env.PROJECT_ID }}
-          credentials: ${{ secrets.GCP_SA_KEY }}
+          service_account_key: ${{ secrets.GCP_SA_KEY }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Authorize Docker for Artifact Registry
         run: |
@@ -32,16 +32,16 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -f ./docker/Dockerfile -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:$GITHUB_SHA .
+          docker build -f ./docker/Dockerfile -t ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:$GITHUB_SHA .
 
       - name: Push Docker image
         run: |
-          docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:$GITHUB_SHA
+          docker push ${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:$GITHUB_SHA
 
       - name: Deploy to Cloud Run
         run: |
           gcloud run deploy ${{ env.SERVICE_NAME }} \
-            --image=${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:$GITHUB_SHA \
+            --image=${{ env.REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/${{ env.REPO_NAME }}/${{ env.SERVICE_NAME }}:$GITHUB_SHA \
             --region=${{ env.REGION }} \
             --platform=managed \
             --vpc-connector=${{ env.VPC_CONNECTOR }} \
