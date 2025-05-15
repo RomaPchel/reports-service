@@ -10,7 +10,7 @@ jobs:
 
     env:
       PROJECT_ID: saas-452909
-      REGION: europe-west-4
+      REGION: europe-west4
       SERVICE_NAME: reports-service
       REPO_NAME: reports-service
       VPC_CONNECTOR: marklie-vpc
