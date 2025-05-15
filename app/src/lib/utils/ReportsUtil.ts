@@ -41,7 +41,7 @@ export class ReportsUtil {
         const reportData = await FacebookDataUtil.getAllReportData(
             data.organizationUuid,
             adAccount.adAccountId,
-            data.dataPreset
+            data.datePreset
         );
         adAccountReports.push({
           adAccountId: adAccount.adAccountId,
@@ -57,7 +57,7 @@ export class ReportsUtil {
         gcsUrl: "",
         data: adAccountReports,
         metadata: {
-          datePreset: data.dataPreset,
+          datePreset: data.datePreset,
           reviewNeeded: data.reviewNeeded,
         },
       });
@@ -69,7 +69,7 @@ export class ReportsUtil {
 
       const pdfBuffer = await this.generateReportPdf(report.uuid);
 
-      const filePath = this.generateFilePath(client.uuid, data.dataPreset);
+      const filePath = this.generateFilePath(client.uuid, data.datePreset);
       const gcs = GCSWrapper.getInstance('marklie-client-reports');
 
       const publicUrl = await gcs.uploadBuffer(
@@ -216,14 +216,13 @@ export class ReportsUtil {
   public static async generateReportPdf(reportUuid: string): Promise<Buffer> {
     const browser = await puppeteer.launch({
       headless: true,
+      executablePath: process.env.CHROME_BIN || (puppeteer.executablePath()),
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
     const page = await browser.newPage();
-    await page.goto(`https://marklie.com/pdf-report/${reportUuid}`);
+    await page.goto(`https://marklie.com/pdf-report/${reportUuid}`, {waitUntil: 'networkidle0'});
     await page.emulateMediaType('print');
-
-    await new Promise(resolve => setTimeout(resolve, 2000));
 
     const pdf = await page.pdf({
       format: 'A4',
