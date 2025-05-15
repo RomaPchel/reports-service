@@ -19,11 +19,11 @@ const database = await Database.getInstance();
 
 logger.info("Database has connected!");
 
+await runMigrations();
+
 const reportQueue = ReportQueueService.getInstance();
 
-await runMigrations()
-logger.info("✅ Migrations executed on startup");
-
+await database.orm.getSchemaGenerator().updateSchema()
 app.use(
     cors({
       origin: "http://localhost:4200",
