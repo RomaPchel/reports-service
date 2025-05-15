@@ -42,8 +42,9 @@ app
     .use(new ReportsController().routes())
     .use(new ReportsController().allowedMethods());
 
-app.listen(3030, () => {
-  logger.info(`Auth server is running at ${3030}`);
+const PORT = process.env.PORT || 3030;
+app.listen(PORT, () => {
+  logger.info(`Auth server is running at ${PORT}`);
 });
 
 process.on("SIGINT", async () => {
