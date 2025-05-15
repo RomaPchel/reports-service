@@ -29,7 +29,7 @@ jobs:
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_IDENTITY_PROVIDER }}
-          service_account: github-deployer@saas-452909.iam.gserviceaccount.com
+          service_account: 'github-deployer@saas-452909.iam.gserviceaccount.com'
 
       - name: Set up gcloud SDK
         uses: google-github-actions/setup-gcloud@v2
@@ -54,6 +54,13 @@ jobs:
           region: ${{ env.REGION }}
           env_vars: |
             REDIS_HOST=10.x.x.x:6379
+            DATABASE_PASSWORD=${{ secrets.DATABASE_PASSWORD }}
+            ENVIRONMENT=${{ secrets.ENVIRONMENT }}
+            ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
+            REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
+            GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
+            ORG_TOKEN_SECRET_KEY=${{ secrets.ORG_TOKEN_SECRET_KEY }}
+            FACEBOOK_ACCESS_TOKEN=${{ secrets.FACEBOOK_ACCESS_TOKEN }}
 
       - name: Output service URL
         run: echo "✅ Deployed to ${{ steps.deploy.outputs.url }}"
