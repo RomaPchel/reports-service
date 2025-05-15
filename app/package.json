@@ -11,18 +11,19 @@
     "docker:up": "docker compose -f ../docker/compose.yaml up -d",
     "generate:dts": "tsc --emitDeclarationOnly --outDir dist",
     "build:all": "npm run build && npm run generate:dts",
-    "start": "node --experimental-specifier-resolution=node dist/index.js",
+    "start": "node --env-file .env --experimental-specifier-resolution=node dist/index.js",
     "watch": "pnpm docker:up & npx nodemon --config ./nodemon.json",
     "start:dev": "npm run watch"
   },
   "dependencies": {
     "@koa/cors": "^5.0.0",
+    "@mikro-orm/migrations": "^6.4.15",
     "axios": "^1.8.4",
     "bullmq": "^5.48.1",
     "ioredis": "^5.4.2",
     "jsonwebtoken": "^9.0.2",
     "luxon": "^3.6.1",
-    "marklie-ts-core": "1.1.24",
+    "marklie-ts-core": "1.1.25",
     "puppeteer": "^24.6.1",
     "winston": "^3.17.0",
     "zod": "^3.24.2"
