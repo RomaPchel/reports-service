@@ -54,7 +54,7 @@ jobs:
           region: ${{ env.REGION }}
           env_vars: |
             REDIS_HOST=10.213.5.213
-            DATABASE_PASSWORD=Ig6ms/=i~=+R)QB=
+            DATABASE_PASSWORD=u:D1oPX[>k`=(M"0
             ENVIRONMENT=production
             ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
             REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
