@@ -43,7 +43,7 @@ export class ReportsService {
                   organizationUuid: client.organization.uuid,
                   accountId: client?.accountId,
                   reviewNeeded: scheduleOption.reviewNeeded,
-                  dataPreset: scheduleOption.dataPreset
+                  datePreset: scheduleOption.datePreset
               },
               cronExpression,
           );
@@ -52,7 +52,7 @@ export class ReportsService {
           schedule.reportType = scheduleOption.frequency;
           schedule.jobData = scheduleOption as any;
           schedule.timezone = "UTC";
-          schedule.datePreset = scheduleOption.dataPreset;
+          schedule.datePreset = scheduleOption.datePreset;
           schedule.bullJobId = job.id as string;
           schedule.nextRun = ReportsUtil.getNextRunDate(scheduleOption).toJSDate();
 
