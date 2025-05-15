@@ -16,15 +16,18 @@ jobs:
       REDIS_HOST: 10.x.x.x:6379
 
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: 'Set up Google Cloud SDK'
-        uses: google-github-actions/setup-gcloud@v4
+      - id: 'auth'
+        name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
         with:
-          service_account_key: ${{ secrets.GCP_SA_KEY }}
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Authorize Docker for Artifact Registry
         run: |
@@ -47,3 +50,6 @@ jobs:
             --vpc-connector=${{ env.VPC_CONNECTOR }} \
             --set-env-vars=REDIS_HOST=${{ env.REDIS_HOST }} \
             --allow-unauthenticated
+
+      - name: Google CloudRun service URI
+        run: 'curl "${{ steps.deploy.outputs.url }}"'
