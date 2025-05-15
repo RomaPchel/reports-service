@@ -11,7 +11,7 @@
     "docker:up": "docker compose -f ../docker/compose.yaml up -d",
     "generate:dts": "tsc --emitDeclarationOnly --outDir dist",
     "build:all": "npm run build && npm run generate:dts",
-    "start": "node --env-file .env --experimental-specifier-resolution=node dist/index.js",
+    "start": "node --experimental-specifier-resolution=node dist/index.js",
     "watch": "pnpm docker:up & npx nodemon --config ./nodemon.json",
     "start:dev": "npm run watch"
   },
