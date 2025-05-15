@@ -6,7 +6,7 @@ import {
     CookiesMiddleware,
     Database,
     ErrorMiddleware,
-    Log, runMigrations,
+    Log,
     ValidationMiddleware,
 } from "marklie-ts-core";
 import { ReportQueueService } from "./lib/services/ReportsQueueService.js";
@@ -22,7 +22,7 @@ logger.info("Database has connected!");
 const reportQueue = ReportQueueService.getInstance();
 
 if (process.env.ENVIRONMENT === 'production') {
-    await runMigrations();
+    await database.orm.getMigrator().up();
     logger.info("✅ Migrations executed on startup");
 }
 
