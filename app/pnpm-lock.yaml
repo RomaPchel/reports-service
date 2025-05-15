@@ -11,6 +11,9 @@ importers:
       '@koa/cors':
         specifier: ^5.0.0
         version: 5.0.0
+      '@mikro-orm/migrations':
+        specifier: ^6.4.15
+        version: 6.4.15(@mikro-orm/core@6.4.15)(@types/node@22.10.10)(pg@8.15.6)
       axios:
         specifier: ^1.8.4
         version: 1.8.4
@@ -27,8 +30,8 @@ importers:
         specifier: ^3.6.1
         version: 3.6.1
       marklie-ts-core:
-        specifier: 1.1.24
-        version: 1.1.24(@types/node@22.10.10)(pg@8.15.6)
+        specifier: 1.1.25
+        version: 1.1.25(@types/node@22.10.10)(pg@8.15.6)
       puppeteer:
         specifier: ^24.6.1
         version: 24.6.1(typescript@5.7.3)
@@ -1745,8 +1748,8 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
-  marklie-ts-core@1.1.24:
-    resolution: {integrity: sha512-j07xS4XFnMKxPME9RKOT3K/oNflev3Eu6jEdZOC3jpZdZzA1nuufq4Do9b+jHKO/D8M99xvHD4dlSV3uuBPGrA==}
+  marklie-ts-core@1.1.25:
+    resolution: {integrity: sha512-qD+qKjmdK2KnnHjd/viZujWvcrt+vSetzieuF28+zckctCRSB/GKVnG2zW4pZNMjfzqRBWVdQheROvHV8h0QvQ==}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -4409,7 +4412,7 @@ snapshots:
     dependencies:
       semver: 7.5.4
 
-  marklie-ts-core@1.1.24(@types/node@22.10.10)(pg@8.15.6):
+  marklie-ts-core@1.1.25(@types/node@22.10.10)(pg@8.15.6):
     dependencies:
       '@google-cloud/pubsub': 4.11.0
       '@google-cloud/secret-manager': 6.0.1
