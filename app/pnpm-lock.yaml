@@ -27,8 +27,8 @@ importers:
         specifier: ^3.6.1
         version: 3.6.1
       marklie-ts-core:
-        specifier: 1.1.13
-        version: 1.1.13
+        specifier: 1.1.15
+        version: 1.1.15
       puppeteer:
         specifier: ^24.6.1
         version: 24.6.1(typescript@5.7.3)
@@ -1674,8 +1674,8 @@ packages:
     resolution: {integrity: sha512-hXdUTZYIVOt1Ex//jAQi+wTZZpUpwBj/0QsOzqegb3rGMMeJiSEu5xLHnYfBrRV4RH2+OCSOO95Is/7x1WJ4bw==}
     engines: {node: '>=10'}
 
-  marklie-ts-core@1.1.13:
-    resolution: {integrity: sha512-IHjLB1kWj+pmoKVLD8HwIpgDwZ9u9aCrzKKXzZ0MlQN75FVM2gaNvIYKQdUwFg7poYVXfeMshhqus4euaHSheA==}
+  marklie-ts-core@1.1.15:
+    resolution: {integrity: sha512-XZ5LUdUr6RnK4pIDwCzYxDIk+GxCKwN3TFeC1Xb0mqBbHR2X1KN0MYsX/dZ21tlQK1zDEnWdSh1DC3usP8DIUQ==}
 
   math-intrinsics@1.1.0:
     resolution: {integrity: sha512-/IXtbwEk5HTPyEwyKX6hGkYXxM9nbj64B+ilVJnC/R6B0pH5G4V3b0pVbL7DBj4tkhBAppbQUlf6F6Xl9LHu1g==}
@@ -4223,7 +4223,7 @@ snapshots:
     dependencies:
       semver: 7.5.4
 
-  marklie-ts-core@1.1.13:
+  marklie-ts-core@1.1.15:
     dependencies:
       '@google-cloud/pubsub': 4.11.0
       '@google-cloud/secret-manager': 6.0.1
