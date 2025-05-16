@@ -2,12 +2,12 @@ import Koa from "koa";
 import koabodyparser from "koa-bodyparser";
 import cors from "@koa/cors";
 import {
-    AuthMiddleware,
-    CookiesMiddleware,
-    Database,
-    ErrorMiddleware,
-    Log, runMigrations,
-    ValidationMiddleware,
+  AuthMiddleware,
+  CookiesMiddleware,
+  Database,
+  ErrorMiddleware,
+  Log,
+  ValidationMiddleware,
 } from "marklie-ts-core";
 import { ReportQueueService } from "./lib/services/ReportsQueueService.js";
 import {ReportsController} from "./lib/controllers/ReportsController.js";
@@ -19,11 +19,8 @@ const database = await Database.getInstance();
 
 logger.info("Database has connected!");
 
-await runMigrations();
-
 const reportQueue = ReportQueueService.getInstance();
 
-await database.orm.getSchemaGenerator().updateSchema()
 app.use(
     cors({
       origin: "http://localhost:4200",
@@ -32,7 +29,7 @@ app.use(
 );
 app.use(koabodyparser());
 app.use(CookiesMiddleware);
-app.use(AuthMiddleware(["/reports"]));
+app.use(AuthMiddleware([/^\/api\/reports\/[^/]+$/]));
 app.use(ValidationMiddleware());
 app.use(ErrorMiddleware());
 
