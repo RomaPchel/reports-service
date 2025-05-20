@@ -24,7 +24,18 @@ const reportQueue = ReportQueueService.getInstance();
 
 app.use(
     cors({
-      origin: "http://localhost:4200",
+        origin: (ctx) => {
+            const allowedOrigins = [
+                "http://localhost:4200",
+                "https://marklie.com",
+                "https://ae08-77-174-130-35.ngrok-free.app",
+            ];
+            const requestOrigin = ctx.request.header.origin;
+            if (requestOrigin && allowedOrigins.includes(requestOrigin)) {
+                return requestOrigin;
+            }
+            return allowedOrigins[0];
+        },
       credentials: true,
     }),
 );
