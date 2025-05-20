@@ -43,7 +43,8 @@ export class ReportsService {
                   organizationUuid: client.organization.uuid,
                   accountId: client?.accountId,
                   reviewNeeded: scheduleOption.reviewNeeded,
-                  datePreset: scheduleOption.datePreset
+                  datePreset: scheduleOption.datePreset,
+                  timeZone: scheduleOption.timeZone
               },
               cronExpression,
           );
@@ -51,7 +52,7 @@ export class ReportsService {
           //todo: add timezones
           schedule.reportType = scheduleOption.frequency;
           schedule.jobData = scheduleOption as any;
-          schedule.timezone = "UTC";
+          schedule.timezone = scheduleOption.timeZone;
           schedule.datePreset = scheduleOption.datePreset;
           schedule.bullJobId = job.id as string;
           schedule.nextRun = ReportsUtil.getNextRunDate(scheduleOption).toJSDate();

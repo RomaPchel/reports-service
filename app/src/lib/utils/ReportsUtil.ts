@@ -5,10 +5,13 @@ import {
   OrganizationClient, PubSubWrapper,
   SchedulingOption, Report
 } from "marklie-ts-core";
-import type {ReportJobData, ReportScheduleRequest} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import puppeteer from "puppeteer";
 import {FacebookDataUtil} from "./FacebookDataUtil.js";
 import {ClientFacebookAdAccount} from "marklie-ts-core";
+import type {
+  ReportJobData,
+  ReportScheduleRequest,
+} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 
 const logger: Log = Log.getInstance().extend("reports-util");
 const database = await Database.getInstance();
@@ -142,17 +145,20 @@ export class ReportsUtil {
   }
 
   public static getNextRunDate(scheduleOption: ReportScheduleRequest) {
-    const now = DateTime.now().setZone("UTC");
+    const tz = scheduleOption.timeZone || "UTC";
+    const now = DateTime.now().setZone(tz);
     let nextRun: DateTime;
+
     switch (scheduleOption.frequency) {
       case "weekly": {
         const targetWeekday: WeekdayNumbers = this.getWeekday(
             scheduleOption.dayOfWeek,
         );
+        const [hour, minute] = scheduleOption.time.split(":").map(Number);
         nextRun = now.set({
           weekday: targetWeekday,
-          hour: Number(scheduleOption.time.split(":")[0]),
-          minute: Number(scheduleOption.time.split(":")[1]),
+          hour: hour,
+          minute: minute,
           second: 0,
           millisecond: 0,
         });
@@ -165,10 +171,12 @@ export class ReportsUtil {
         const targetWeekday: WeekdayNumbers = this.getWeekday(
             scheduleOption.dayOfWeek,
         );
+        const [hour, minute] = scheduleOption.time.split(":").map(Number);
+
         nextRun = now.set({
           weekday: targetWeekday,
-          hour: Number(scheduleOption.time.split(":")[0]),
-          minute: Number(scheduleOption.time.split(":")[1]),
+          hour: hour,
+          minute: minute,
           second: 0,
           millisecond: 0,
         });
@@ -178,10 +186,11 @@ export class ReportsUtil {
         break;
       }
       case "monthly": {
+        const [hour, minute] = scheduleOption.time.split(":").map(Number);
         nextRun = now.set({
           day: scheduleOption.dayOfMonth,
-          hour: Number(scheduleOption.time.split(":")[0]),
-          minute: Number(scheduleOption.time.split(":")[1]),
+          hour: hour,
+          minute: minute,
           second: 0,
           millisecond: 0,
         });
@@ -191,9 +200,10 @@ export class ReportsUtil {
         break;
       }
       case "custom": {
+        const [hour, minute] = scheduleOption.time.split(":").map(Number);
         nextRun = now.set({
-          hour: Number(scheduleOption.time.split(":")[0]),
-          minute: Number(scheduleOption.time.split(":")[1]),
+          hour: hour,
+          minute: minute,
           second: 0,
           millisecond: 0,
         });
