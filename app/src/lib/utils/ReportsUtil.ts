@@ -213,26 +213,36 @@ export class ReportsUtil {
     return nextRun;
   }
 
-  public static async generateReportPdf(reportUuid: string): Promise<Buffer> {
+  private static async generateReportPdf(reportUuid: string): Promise<Buffer> {
+    const isProduction = process.env.ENVIRONMENT === "production";
+    const baseUrl =
+        isProduction
+            ? "https://marklie.com"
+            : "http://localhost:4200";
+
     const browser = await puppeteer.launch({
       headless: true,
-      executablePath: process.env.CHROME_BIN || (puppeteer.executablePath()),
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
 
-    const page = await browser.newPage();
-    await page.goto(`https://marklie.com/pdf-report/${reportUuid}`, {waitUntil: 'networkidle0'});
-    await page.emulateMediaType('print');
+    try {
+      const page = await browser.newPage();
+      await page.goto(`${baseUrl}/pdf-report/${reportUuid}`, {
+        waitUntil: 'networkidle0',
+        timeout: 60000,
+      });
 
-    const pdf = await page.pdf({
-      format: 'A4',
-      landscape: true,
-      printBackground: true,
-    });
+      await page.emulateMediaType('print');
 
-    await browser.close();
-    return Buffer.from(pdf);
+      const pdf = await page.pdf({
+        format: 'A4',
+        landscape: true,
+        printBackground: true,
+      });
+
+      return Buffer.from(pdf);
+    } finally {
+      await browser.close();
+    }
   }
-
-
 }

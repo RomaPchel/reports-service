@@ -53,14 +53,11 @@ jobs:
           image: ${{ env.IMAGE_REPO }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
           region: ${{ env.REGION }}
           env_vars: |
-            REDIS_HOST=172.16.209.3
-            DATABASE_PASSWORD=Vu^YcyB5*CH:$s7}
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
             ENVIRONMENT=production
             ACCESS_TOKEN_SECRET=${{ secrets.ACCESS_TOKEN_SECRET }}
             REFRESH_TOKEN_SECRET=${{ secrets.REFRESH_TOKEN_SECRET }}
             GCP_PROJECT_ID=${{ secrets.GCP_PROJECT_ID }}
             ORG_TOKEN_SECRET_KEY=${{ secrets.ORG_TOKEN_SECRET_KEY }}
-            FACEBOOK_ACCESS_TOKEN=${{ secrets.FACEBOOK_ACCESS_TOKEN }}
-            INSTANCE_CONNECTION_NAME=saas-452909:europe-west4:marklie-db
       - name: Output service URL
         run: echo "✅ Deployed to ${{ steps.deploy.outputs.url }}"
