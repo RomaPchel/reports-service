@@ -1,6 +1,7 @@
 import Koa from "koa";
 import koabodyparser from "koa-bodyparser";
 import cors from "@koa/cors";
+import 'dotenv/config';
 import {
   AuthMiddleware,
   CookiesMiddleware,
