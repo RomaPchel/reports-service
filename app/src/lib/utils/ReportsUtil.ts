@@ -52,6 +52,8 @@ export class ReportsUtil {
         });
       }
 
+      logger.info("Fetched all report Data.")
+
 
       const report = database.em.create(Report, {
         organization: client.organization,
@@ -69,6 +71,8 @@ export class ReportsUtil {
       await database.em.flush();
 
       await this.updateLastRun(client.uuid);
+
+      logger.info("Generating PDF.")
 
       const pdfBuffer = await this.generateReportPdf(report.uuid);
 
@@ -96,6 +100,8 @@ export class ReportsUtil {
       const topic = data.reviewNeeded
           ? "notification-report-ready"
           : "notification-send-report";
+
+      logger.info("Sending to notification.")
 
       await PubSubWrapper.publishMessage(topic, payload);
 
