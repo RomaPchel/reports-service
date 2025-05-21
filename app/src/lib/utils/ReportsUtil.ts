@@ -127,8 +127,8 @@ export class ReportsUtil {
     try {
       const page = await browser.newPage();
       await page.goto(`${baseUrl}/pdf-report/${reportUuid}`, {
-        waitUntil: 'networkidle0',
-        timeout: 60000,
+        waitUntil: 'load',
+        timeout: 120000,
       });
 
       await page.emulateMediaType('print');
@@ -137,6 +137,7 @@ export class ReportsUtil {
         format: 'A4',
         landscape: true,
         printBackground: true,
+        timeout: 120000,
       });
 
       return Buffer.from(pdf);
