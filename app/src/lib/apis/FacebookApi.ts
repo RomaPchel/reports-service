@@ -48,6 +48,7 @@ export class FacebookApi {
         access_token: token,
       },
     });
+    this.accountId = accountId;
   }
 
   static async create(
