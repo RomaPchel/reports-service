@@ -127,12 +127,12 @@ export class ReportsUtil {
     try {
       const page = await browser.newPage();
       await page.goto(`${baseUrl}/pdf-report/${reportUuid}`, {
-        waitUntil: 'load',
+        waitUntil: 'domcontentloaded',
         timeout: 120000,
       });
 
       await page.emulateMediaType('print');
-
+      await new Promise(resolve => setTimeout(resolve, 2000));
       const pdf = await page.pdf({
         format: 'A4',
         landscape: true,
