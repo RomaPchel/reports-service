@@ -101,8 +101,42 @@ export class ReportsUtil {
 
       return { success: true };
     } catch (e) {
-      logger.error("Failed to process scheduled report job:", e);
+      console.error("Failed to process scheduled report job:", e);
       return { success: false };
+    }
+  }
+
+  private static async generateReportPdf(reportUuid: string): Promise<Buffer> {
+    const isProduction = process.env.ENVIRONMENT === "production";
+    const baseUrl =
+        isProduction
+            ? "https://marklie.com"
+            : "http://localhost:4200";
+
+    const browser = await puppeteer.launch({
+      headless: true,
+      executablePath: '/usr/bin/google-chrome-stable',
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    try {
+      const page = await browser.newPage();
+      await page.goto(`${baseUrl}/pdf-report/${reportUuid}`, {
+        waitUntil: 'networkidle0',
+        timeout: 60000,
+      });
+
+      await page.emulateMediaType('print');
+
+      const pdf = await page.pdf({
+        format: 'A4',
+        landscape: true,
+        printBackground: true,
+      });
+
+      return Buffer.from(pdf);
+    } finally {
+      await browser.close();
     }
   }
 
@@ -221,38 +255,5 @@ export class ReportsUtil {
       }
     }
     return nextRun;
-  }
-
-  private static async generateReportPdf(reportUuid: string): Promise<Buffer> {
-    const isProduction = process.env.ENVIRONMENT === "production";
-    const baseUrl =
-        isProduction
-            ? "https://marklie.com"
-            : "http://localhost:4200";
-
-    const browser = await puppeteer.launch({
-      headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    });
-
-    try {
-      const page = await browser.newPage();
-      await page.goto(`${baseUrl}/pdf-report/${reportUuid}`, {
-        waitUntil: 'networkidle0',
-        timeout: 60000,
-      });
-
-      await page.emulateMediaType('print');
-
-      const pdf = await page.pdf({
-        format: 'A4',
-        landscape: true,
-        printBackground: true,
-      });
-
-      return Buffer.from(pdf);
-    } finally {
-      await browser.close();
-    }
   }
 }
