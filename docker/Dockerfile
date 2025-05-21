@@ -1,5 +1,6 @@
 FROM node:20-slim
 
+# Install dependencies for Chromium (same as before)
 RUN apt-get update && apt-get install -y \
   wget \
   ca-certificates \
@@ -30,6 +31,8 @@ RUN npm install -g pnpm
 COPY ../app/package.json ../app/pnpm-lock.yaml ./
 
 RUN pnpm install
+
+RUN npx puppeteer browsers install chrome
 
 COPY ../app/src ./src
 COPY ../app/.swcrc ./
