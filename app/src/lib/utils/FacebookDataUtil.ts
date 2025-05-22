@@ -152,13 +152,13 @@ export class FacebookDataUtil {
           sourceUrl: "",
       }));
 
+      const api = await FacebookApi.create(organizationUuid, accountId);
+
       const creativeAssets = await Promise.all(
           shownAds.map(async (ad) => {
-              const api = await FacebookApi.create(organizationUuid, accountId);
               return await api.getCreativeAsset(ad.creative.id);
           }),
       );
-      const api = await FacebookApi.create(organizationUuid, accountId);
 
       await Promise.all(
           creativeAssets.map(async (creativeAsset, index) => {
