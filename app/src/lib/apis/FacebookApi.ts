@@ -55,6 +55,7 @@ export class FacebookApi {
       organizationUuid: string,
       accountId: string
   ): Promise<FacebookApi> {
+    console.log(`Creating new Facebook API for ${organizationUuid}`);
     const tokenRecord = await database.em.findOne(OrganizationToken, {
       organization: organizationUuid,
     });
@@ -62,6 +63,7 @@ export class FacebookApi {
     if (!tokenRecord) {
       throw new Error(`No token found for organizationUuid with UUID ${organizationUuid}`);
     }
+    console.log(tokenRecord);
 
     return new FacebookApi(tokenRecord.token, accountId);
   }
