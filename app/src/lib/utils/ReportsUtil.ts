@@ -12,6 +12,7 @@ import type {
   ReportJobData,
   ReportScheduleRequest,
 } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+import {AxiosError} from "axios";
 
 const logger: Log = Log.getInstance().extend("reports-util");
 const database = await Database.getInstance();
@@ -107,7 +108,11 @@ export class ReportsUtil {
 
       return { success: true };
     } catch (e) {
-      console.error("Failed to process scheduled report job:", e);
+      if (e && e instanceof AxiosError){
+        console.error(e.response!.data);
+      }else {
+        console.error("Failed to process scheduled report job:", e);
+      }
       return { success: false };
     }
   }
