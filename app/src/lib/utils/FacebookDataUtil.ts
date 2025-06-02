@@ -23,7 +23,7 @@ export class FacebookDataUtil {
       );
 
       return {  ads: processedAds, KPIs: this.normalizeKPIs(KPIs[0]), campaigns: this.normalizeCampaigns(campaigns), graphs: this.normalizeGraphs(graphs) };
-     }
+  }
 
   private static normalizeGraphs(graphs: any[]) {
       return graphs.map((g) => {
