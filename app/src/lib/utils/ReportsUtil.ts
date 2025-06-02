@@ -6,8 +6,8 @@ import {
   SchedulingOption, Report
 } from "marklie-ts-core";
 import puppeteer from "puppeteer";
-import {FacebookDataUtil} from "./FacebookDataUtil.js";
-import {ClientFacebookAdAccount} from "marklie-ts-core";
+// import {FacebookDataUtil} from "./FacebookDataUtil.js";
+// import {ClientFacebookAdAccount} from "marklie-ts-core";
 import type {
   ReportJobData,
   ReportScheduleRequest,
@@ -35,23 +35,23 @@ export class ReportsUtil {
         return {success: false};
       }
 
-      const adAccounts: ClientFacebookAdAccount = await database.em.find(ClientFacebookAdAccount, {
-        client: data.clientUuid
-      });
+      // const adAccounts: ClientFacebookAdAccount = await database.em.find(ClientFacebookAdAccount, {
+      //   client: data.clientUuid
+      // });
+      //
+      // const adAccountReports = []
 
-      const adAccountReports = []
-
-      for (const adAccount of adAccounts) {
-        const reportData = await FacebookDataUtil.getAllReportData(
-            data.organizationUuid,
-            adAccount.adAccountId,
-            data.datePreset
-        );
-        adAccountReports.push({
-          adAccountId: adAccount.adAccountId,
-          ...reportData,
-        });
-      }
+      // for (const adAccount of adAccounts) {
+      //   const reportData = await FacebookDataUtil.getAllReportData(
+      //       data.organizationUuid,
+      //       adAccount.adAccountId,
+      //       data.datePreset
+      //   );
+      //   adAccountReports.push({
+      //     adAccountId: adAccount.adAccountId,
+      //     ...reportData,
+      //   });
+      // }
 
       logger.info("Fetched all report Data.")
 
@@ -61,7 +61,7 @@ export class ReportsUtil {
         client: client,
         reportType: 'facebook',
         gcsUrl: "",
-        data: adAccountReports,
+        data: {},
         metadata: {
           datePreset: data.datePreset,
           reviewNeeded: data.reviewNeeded,
@@ -92,7 +92,7 @@ export class ReportsUtil {
       await database.em.flush();
 
       const payload = {
-        reportUrl: publicUrl,
+        reportUrl: "gs://marklie-client-reports/report/c5b300eb-ab4d-4db6-bae7-c81610dd9f5a-facebook-report-last_7d-2025-05-29.pdf",
         clientUuid: client.uuid,
         organizationUuid: client.organization.uuid,
         reportId: report.uuid,
