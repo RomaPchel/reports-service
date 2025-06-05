@@ -58,7 +58,7 @@ export class ReportQueueService {
         });
     }
 
-    public async deleteAllJobs(): Promise<void> {
+    public async deleteAllScheduledJobs(): Promise<void> {
         const repeatableJobs = await this.queue.listScheduledJobs();
         for (const job of repeatableJobs) {
             await this.queue.removeScheduledJob(job.key);
@@ -70,8 +70,8 @@ export class ReportQueueService {
         return await this.queue.getJob(jobId);
     }
 
-    public async removeJob(jobId: string): Promise<void> {
-        await this.queue.removeJob(jobId);
+    public async removeScheduledJob(jobId: string): Promise<void> {
+        await this.queue.removeScheduledJob(jobId);
     }
 
     public async close(): Promise<void> {

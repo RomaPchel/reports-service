@@ -65,9 +65,69 @@ export class ReportsService {
       }
   }
 
+  async updateSchedulingOption(
+    uuid: string,
+    scheduleOption: ReportScheduleRequest,
+  ): Promise<string | void> {
+      try {
+          const schedulingOption = await database.em.findOne(SchedulingOption, {uuid: uuid});
+
+          const cronExpression =
+              CronUtil.convertScheduleRequestToCron(scheduleOption);
+
+          schedulingOption.cronExpression =
+              cronExpression
+
+          schedulingOption.client = database.em.getReference(
+              OrganizationClient,
+              schedulingOption.client.uuid,
+          );
+
+          scheduleOption.clientUuid = schedulingOption.client.uuid;
+
+          const client = await database.em.findOne(OrganizationClient, {
+              uuid: schedulingOption.client.uuid,
+          });
+
+          const queue = ReportQueueService.getInstance();
+          
+          await queue.removeScheduledJob(schedulingOption.bullJobId);
+
+          const job: Job = await queue.scheduleReport(
+              {
+                  ...scheduleOption,
+                  organizationUuid: client.organization.uuid,
+                  accountId: client?.accountId,
+                  reviewNeeded: scheduleOption.reviewNeeded,
+                  datePreset: scheduleOption.datePreset,
+                  timeZone: scheduleOption.timeZone
+              },
+              cronExpression,
+          );
+
+          //todo: add timezones
+          schedulingOption.reportType = scheduleOption.frequency;
+          schedulingOption.jobData = scheduleOption as any;
+          schedulingOption.timezone = scheduleOption.timeZone;
+          schedulingOption.datePreset = scheduleOption.datePreset;
+          schedulingOption.bullJobId = job.id as string;
+          schedulingOption.nextRun = ReportsUtil.getNextRunDate(scheduleOption).toJSDate();
+
+          await database.em.persistAndFlush(schedulingOption);
+
+          return cronExpression;
+      }catch (e) {
+          logger.error(e);
+      }
+  }
+
   async getReport(
     uuid: string,
   ) {
     return database.em.findOne(Report, {uuid: uuid});
+  }
+
+  async getSchedulingOption(uuid: string ) {
+    return database.em.findOne(SchedulingOption, {uuid: uuid});
   }
 }
