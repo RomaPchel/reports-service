@@ -1,18 +1,21 @@
 import { DateTime, type WeekdayNumbers } from "luxon";
 import {
-  Database, GCSWrapper,
+  Database,
+  GCSWrapper,
   Log,
-  OrganizationClient, PubSubWrapper,
-  SchedulingOption, Report
+  OrganizationClient,
+  SchedulingOption,
+  Report,
+  ClientFacebookAdAccount,
+  PubSubWrapper,
 } from "marklie-ts-core";
 import puppeteer from "puppeteer";
-// import {FacebookDataUtil} from "./FacebookDataUtil.js";
-// import {ClientFacebookAdAccount} from "marklie-ts-core";
 import type {
   ReportJobData,
   ReportScheduleRequest,
 } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import {AxiosError} from "axios";
+import {FacebookDataUtil} from "./FacebookDataUtil.js";
 
 const logger: Log = Log.getInstance().extend("reports-util");
 const database = await Database.getInstance();
@@ -35,23 +38,24 @@ export class ReportsUtil {
         return {success: false};
       }
 
-      // const adAccounts: ClientFacebookAdAccount = await database.em.find(ClientFacebookAdAccount, {
-      //   client: data.clientUuid
-      // });
-      //
-      // const adAccountReports = []
+      const adAccounts: ClientFacebookAdAccount = await database.em.find(ClientFacebookAdAccount, {
+        client: data.clientUuid
+      });
 
-      // for (const adAccount of adAccounts) {
-      //   const reportData = await FacebookDataUtil.getAllReportData(
-      //       data.organizationUuid,
-      //       adAccount.adAccountId,
-      //       data.datePreset
-      //   );
-      //   adAccountReports.push({
-      //     adAccountId: adAccount.adAccountId,
-      //     ...reportData,
-      //   });
-      // }
+      const adAccountReports = []
+
+      for (const adAccount of adAccounts) {
+        const reportData = await FacebookDataUtil.getAllReportData(
+            data.organizationUuid,
+            adAccount.adAccountId,
+            data.datePreset,
+            data.metrics
+        );
+        adAccountReports.push({
+          adAccountId: adAccount.adAccountId,
+          ...reportData,
+        });
+      }
 
       logger.info("Fetched all report Data.")
 
@@ -61,7 +65,7 @@ export class ReportsUtil {
         client: client,
         reportType: 'facebook',
         gcsUrl: "",
-        data: {},
+        data: adAccountReports,
         metadata: {
           datePreset: data.datePreset,
           reviewNeeded: data.reviewNeeded,
@@ -92,7 +96,7 @@ export class ReportsUtil {
       await database.em.flush();
 
       const payload = {
-        reportUrl: "gs://marklie-client-reports/report/c5b300eb-ab4d-4db6-bae7-c81610dd9f5a-facebook-report-last_7d-2025-05-29.pdf",
+        reportUrl: publicUrl,
         clientUuid: client.uuid,
         organizationUuid: client.organization.uuid,
         reportId: report.uuid,
