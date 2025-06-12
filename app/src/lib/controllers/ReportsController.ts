@@ -13,11 +13,11 @@ export class ReportsController extends Router {
     }
 
     private setUpRoutes() {
+        this.get("/available-metrics", this.getAvailableMetrics.bind(this));
         this.get("/:uuid", this.getReport.bind(this));
         this.post("/schedule", this.scheduleReport.bind(this));
         this.get("/scheduling-option/:uuid", this.getSchedulingOption.bind(this));
         this.put("/scheduling-option/:uuid", this.updateSchedulingOption.bind(this));
-        this.get("/available-metrics", this.getAvailableMetrics.bind(this));
     }
 
     private async getReport(ctx: Context) {
@@ -82,4 +82,6 @@ export class ReportsController extends Router {
         ctx.body = metrics
         ctx.status = 200;
     }
+
+
 }
