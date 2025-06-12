@@ -13,6 +13,7 @@ export class ReportsController extends Router {
     }
 
     private setUpRoutes() {
+        this.get("/available-metrics", this.getAvailableMetrics.bind(this));
         this.get("/:uuid", this.getReport.bind(this));
         this.post("/schedule", this.scheduleReport.bind(this));
         this.get("/scheduling-option/:uuid", this.getSchedulingOption.bind(this));
@@ -70,4 +71,17 @@ export class ReportsController extends Router {
         ctx.body = await this.reportsService.getSchedulingOption(uuid);
         ctx.status = 200;
     }
+
+    private async getAvailableMetrics(ctx: Context) {
+        const metrics: any = {
+            kpis: ['spend', 'impressions', 'clicks', 'cpc', 'ctr', 'actions', 'action_values', 'purchase_roas', 'reach'],
+            graphs: ['spend', 'impressions', 'clicks', 'cpc', 'ctr', 'purchaseRoas', 'conversionValue', 'purchases', 'addToCart', 'initiatedCheckouts', 'costPerPurchase', 'costPerCart'],
+            ads: ['spend', 'addToCart', 'purchases', 'roas'],
+            campaigns: ['spend', 'purchases', 'conversionRate', 'purchaseRoas'],
+        }
+        ctx.body = metrics
+        ctx.status = 200;
+    }
+
+
 }
