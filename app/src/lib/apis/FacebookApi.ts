@@ -1,6 +1,6 @@
 import axios, { type AxiosInstance } from "axios";
 import { Database, OrganizationToken } from "marklie-ts-core";
-import {Log} from "marklie-ts-core/dist/lib/classes/Logger.js";
+import { Log } from "marklie-ts-core/dist/lib/classes/Logger.js";
 
 const database = await Database.getInstance();
 const logger = Log.getInstance().extend("facebook-api");
@@ -10,46 +10,28 @@ export const FacebookMetricPresets = {
     'account_name', 'account_id', 'spend', 'impressions', 'clicks', 'cpc', 'ctr', 'actions', 'action_values', 'purchase_roas', 'reach'
   ],
   adPerformance: [
-    'id',
-    'ad_id',
-    'name',
-    'status',
-    'campaign_id',
-    'adset_id',
-    'account_id',
-    'created_time',
-    'updated_time',
-    'effective_status',
-    'configured_status',
+    'id', 'ad_id', 'name', 'status', 'campaign_id', 'adset_id', 'account_id',
+    'created_time', 'updated_time', 'effective_status', 'configured_status',
     'creative{id,name,thumbnail_url,object_story_id,effective_object_story_id}',
-
-    'spend',
-    'purchase_roas',
-
-    'insights.date_preset(last_90d){' +
-    'date_start,date_stop,' +
-    'impressions,clicks,spend,reach,frequency,' +
-    'cpc,ctr,cpm,cpp,' +
-    'actions{action_type,value},' +
-    'action_values{action_type,value},' +
-    'purchase_roas{action_type,value}' +
-    '}'  ],
-  campaigns: [
-    'campaign_id', 'campaign_name', 'spend', 'impressions', 'clicks', 'ctr', 'actions'
+    'spend', 'purchase_roas',
+    'insights.date_preset(last_90d){date_start,date_stop,impressions,clicks,spend,reach,frequency,cpc,ctr,cpm,cpp,actions{action_type,value},action_values{action_type,value},purchase_roas{action_type,value}}'
   ],
-  adInsights: [
-    'ad_id',
+  campaigns: [
+    'campaign_id',
+    'campaign_name',
+    'spend',
     'impressions',
     'clicks',
-    'spend',
-    'actions',
-    'action_values',
-    'purchase_roas'
+    'ctr',
+    'actions'
+  ],
+  adInsights: [
+    'ad_id', 'impressions', 'clicks', 'spend', 'actions', 'action_values', 'purchase_roas'
   ]
 };
 
 export class FacebookApi {
-  private readonly MAX_POLL_ATTEMPTS = 20;
+  private readonly MAX_POLL_ATTEMPTS = 30;
   private readonly POLL_INTERVAL_MS = 3000;
 
   private api: AxiosInstance;
@@ -64,7 +46,6 @@ export class FacebookApi {
   static async create(organizationUuid: string, accountId: string): Promise<FacebookApi> {
     const tokenRecord = await database.em.findOne(OrganizationToken, { organization: organizationUuid });
     if (!tokenRecord) throw new Error(`No token found for organizationUuid ${organizationUuid}`);
-    console.log(tokenRecord.token)
     return new FacebookApi(tokenRecord.token, accountId);
   }
 
@@ -73,6 +54,33 @@ export class FacebookApi {
       params: { batch: JSON.stringify(batch) },
     });
     return res.data.map((item: any) => JSON.parse(item.body));
+  }
+
+  private async paginateAll<T = any>(endpoint: string, params: Record<string, any>): Promise<T[]> {
+    const results: T[] = [];
+    let nextUrl: string | null = endpoint;
+    let nextParams: Record<string, any> = { ...params };
+
+    while (nextUrl) {
+      const res: { data: { data?: T[]; paging?: { next?: string } } } = await this.api.get(nextUrl, {
+        params: nextParams,
+      });
+
+      if (res.data.data) {
+        results.push(...res.data.data);
+      }
+
+      const nextPage: string | undefined = res.data.paging?.next;
+      if (nextPage) {
+        const parsed: URL = new URL(nextPage);
+        nextUrl = parsed.pathname;
+        nextParams = Object.fromEntries(parsed.searchParams.entries());
+      } else {
+        nextUrl = null;
+      }
+    }
+
+    return results;
   }
 
   public async getEntitiesBatch(entityIds: string[], fields: string[]) {
@@ -97,72 +105,140 @@ export class FacebookApi {
       actionBreakdowns = [],
     } = options;
 
-    const hasNestedInsights = fields.some((f) =>
-        f.includes("insights{") || f.includes("insights.date_preset")
-    );
-
-
     const isLargeQuery =
         customDateRange ||
         breakdowns.length > 0 ||
         actionBreakdowns.length > 0 ||
         !["today", "yesterday", "last_7d"].includes(datePreset);
 
-    const useAdsEndpoint = level === "ad" && hasNestedInsights;
-    const useInsightsEndpoint = !useAdsEndpoint;
-
-    const commonParams: Record<string, any> = {
+    const params: Record<string, any> = {
       fields: fields.join(","),
+      level,
       ...(customDateRange ? { time_range: customDateRange } : { date_preset: datePreset }),
       __cppo: 1,
-      actionBreakdowns: ['action_type']
     };
 
-    if (useInsightsEndpoint) {
-      commonParams.level = level;
-      if (breakdowns.length) commonParams.breakdowns = breakdowns.join(",");
-      if (actionBreakdowns.length) commonParams.action_breakdowns = actionBreakdowns.join(",");
-    }
+    if (breakdowns.length) params.breakdowns = breakdowns.join(",");
+    if (actionBreakdowns.length) params.action_breakdowns = actionBreakdowns.join(",");
 
-    const endpoint = useAdsEndpoint
-        ? `${this.accountId}/ads`
-        : `${this.accountId}/insights`;
+    const endpoint = `${this.accountId}/insights`;
 
-    logger.info(`Fetching insights from ${endpoint} with params: ${JSON.stringify(commonParams)}`);
+    logger.info(`Fetching insights from ${endpoint} with params: ${JSON.stringify(params)}`);
 
-    if (!isLargeQuery || useAdsEndpoint) {
-        const res = await this.api.get(endpoint, {
-          params: { ...commonParams, limit: 100 },
+    try {
+      if (!isLargeQuery) {
+        const res = await this.api.get(endpoint, { params: { ...params, limit: 100 } });
+        return res.data.data || [];
+      }
+
+      // fallback to async for large queries
+      const jobRes = await this.api.post(endpoint, null, {
+        params: { ...params, async: true },
+      });
+
+      const reportId = jobRes.data.report_run_id;
+      const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
+
+      for (let i = 0; i < this.MAX_POLL_ATTEMPTS; i++) {
+        const statusRes = await this.api.get(`/${reportId}`);
+        if (statusRes.data.async_status === "Job Completed") {
+          const dataRes = await this.api.get(`/${reportId}/insights`);
+          return dataRes.data.data || [];
+        }
+        if (statusRes.data.async_status === "Job Failed") {
+          throw new Error("Facebook Insights async job failed");
+        }
+        await delay(this.POLL_INTERVAL_MS);
+      }
+
+      throw new Error("Facebook Insights async job timed out");
+    } catch (error: any) {
+      const fbMessage = error?.response?.data?.error?.message || "";
+      const fbCode = error?.response?.data?.error?.code;
+
+      if (fbCode === 1 || fbCode === 17 || fbMessage.includes("reduce the amount of data")) {
+        logger.warn("Fallback to async fetch due to large data size");
+        // Retry with async as fallback
+        const jobRes = await this.api.post(endpoint, null, {
+          params: { ...params, async: true },
         });
 
-        return res.data.data || [];
-    }
+        const reportId = jobRes.data.report_run_id;
+        const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-    const jobRes = await this.api.post(endpoint, null, {
-      params: { ...commonParams, async: true },
-    });
+        for (let i = 0; i < this.MAX_POLL_ATTEMPTS; i++) {
+          const statusRes = await this.api.get(`/${reportId}`);
+          if (statusRes.data.async_status === "Job Completed") {
+            const dataRes = await this.api.get(`/${reportId}/insights`);
+            return dataRes.data.data || [];
+          }
+          if (statusRes.data.async_status === "Job Failed") {
+            throw new Error("Facebook Insights async job failed");
+          }
+          await delay(this.POLL_INTERVAL_MS);
+        }
 
-    const reportId = jobRes.data.report_run_id;
-    const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
-
-    for (let i = 0; i < this.MAX_POLL_ATTEMPTS; i++) {
-      const statusRes = await this.api.get(`/${reportId}`);
-      if (statusRes.data.async_status === "Job Completed") {
-        const dataRes = await this.api.get(`/${reportId}/insights`);
-        return dataRes.data.data || [];
+        throw new Error("Facebook Insights async job timed out");
       }
-      if (statusRes.data.async_status === "Job Failed") {
-        throw new Error("Facebook Insights async job failed");
-      }
-      await delay(this.POLL_INTERVAL_MS);
-    }
 
-    throw new Error("Facebook Insights async job timed out");
+      throw error;
+    }
   }
 
+  public async getAdInsightsWithThumbnails(api: FacebookApi, datePreset: string): Promise<any[]> {
+    const insights = await api.getInsightsSmart(
+        "ad",
+        [
+          "ad_id",
+          "spend",
+          "clicks",
+          "purchase_roas",
+          "impressions",
+          "cpc",
+          "ctr",
+          "actions",
+          "action_values"
+        ],
+        {
+          datePreset,
+          actionBreakdowns: ["action_type"]
+        }
+    );
+
+    const adIds = insights.map(i => i.ad_id).filter(Boolean);
+    const ads = await api.getEntitiesBatch(adIds, ["id", "creative{id}"]);
+
+    const creativeIds = ads
+      .map((ad: { creative: { id: any } }) => ad.creative?.id)
+      .filter((id: any): id is string => !!id);
+
+    const creatives = await api.getEntitiesBatch(creativeIds, ["id", "thumbnail_url"]);
+
+    return insights.map(insight => {
+      const ad = ads.find((a: { id: any }) => a.id === insight.ad_id);
+      const creative = creatives.find(
+        (c: { id: any }) => c.id === ad?.creative?.id,
+      );
+
+      const getActionValue = (type: string) =>
+          insight.actions?.find((a: any) => a.action_type === type)?.value ?? 0;
+
+      return {
+        ...insight,
+        purchases: getActionValue("purchase"),
+        addToCart: getActionValue("add_to_cart"),
+        roas: insight.purchase_roas?.[0]?.value ?? 0,
+        creative: {
+          id: creative?.id ?? null,
+          thumbnail_url: creative?.thumbnail_url ?? null
+        }
+      };
+    });
+  }
+
+
   public async getAdCreatives(fields: string[] = ['id', 'name', 'object_story_id', 'thumbnail_url', 'effective_object_story_id']) {
-    const res = await this.api.get(`${this.accountId}/adcreatives`, { params: { fields: fields.join(",") } });
-    return res.data;
+    return await this.paginateAll(`${this.accountId}/adcreatives`, { fields: fields.join(","), limit: 100 });
   }
 
   public async getCreativeAssetsBatch(creativeIds: string[]) {
@@ -194,10 +270,7 @@ export class FacebookApi {
 
   public async getBusinesses() {
     const res = await this.api.get(`/me/businesses`, {
-      params: {
-        fields: "id,name,owned_ad_accounts{id,name}",
-        limit: 1000,
-      },
+      params: { fields: "id,name,owned_ad_accounts{id,name}", limit: 1000 },
     });
     return res.data;
   }
@@ -213,7 +286,7 @@ export class FacebookApi {
     const businessAccountIds = new Set<string>();
     for (const business of businesses.data) {
       const accounts = business.owned_ad_accounts?.data || [];
-      accounts.forEach((acc: { id: string; name: string }) => businessAccountIds.add(acc.id));
+      accounts.forEach((acc: { id: string }) => businessAccountIds.add(acc.id));
     }
     return allAdAccounts.data.filter((acc: any) => !businessAccountIds.has(acc.id));
   }
@@ -235,8 +308,7 @@ export class FacebookApi {
   public async getPost(postId: string) {
     const res = await this.api.get(`${this.accountId}`, {
       params: {
-        fields:
-            "id,name,adcreatives.limit(1){effective_object_story_id,name,thumbnail_url,authorization_category,instagram_permalink_url}",
+        fields: "id,name,adcreatives.limit(1){effective_object_story_id,name,thumbnail_url,authorization_category,instagram_permalink_url}",
         search: postId,
         limit: 1,
         thumbnail_height: 1080,

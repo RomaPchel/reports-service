@@ -1,87 +1,125 @@
 import Router from "koa-router";
 import type { Context } from "koa";
 import { ReportsService } from "../services/ReportsService.js";
-import {User} from "marklie-ts-core";
-import type {ReportScheduleRequest} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+import { User } from "marklie-ts-core";
+import type { ReportScheduleRequest } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 
 export class ReportsController extends Router {
-    private readonly reportsService: ReportsService;
-    constructor() {
-        super({ prefix: "/api/reports" });
-        this.reportsService = new ReportsService();
-        this.setUpRoutes();
-    }
+  private readonly reportsService: ReportsService;
+  constructor() {
+    super({ prefix: "/api/reports" });
+    this.reportsService = new ReportsService();
+    this.setUpRoutes();
+  }
 
-    private setUpRoutes() {
-        this.get("/available-metrics", this.getAvailableMetrics.bind(this));
-        this.get("/:uuid", this.getReport.bind(this));
-        this.post("/schedule", this.scheduleReport.bind(this));
-        this.get("/scheduling-option/:uuid", this.getSchedulingOption.bind(this));
-        this.put("/scheduling-option/:uuid", this.updateSchedulingOption.bind(this));
-    }
+  private setUpRoutes() {
+    this.get("/available-metrics", this.getAvailableMetrics.bind(this));
+    this.get("/:uuid", this.getReport.bind(this));
+    this.post("/schedule", this.scheduleReport.bind(this));
+    this.get("/scheduling-option/:uuid", this.getSchedulingOption.bind(this));
+    this.put(
+      "/scheduling-option/:uuid",
+      this.updateSchedulingOption.bind(this),
+    );
+  }
 
-    private async getReport(ctx: Context) {
-        const uuid = ctx.params.uuid as string;
+  private async getReport(ctx: Context) {
+    const uuid = ctx.params.uuid as string;
 
-        ctx.body = await this.reportsService.getReport(
-            uuid,
-        );
-        ctx.status = 200;
-    }
+    ctx.body = await this.reportsService.getReport(uuid);
+    ctx.status = 200;
+  }
 
-    private async scheduleReport(ctx: Context) {
-        const user: User = ctx.state.user as User;
-        const scheduleOption: ReportScheduleRequest = ctx.request
-            .body as ReportScheduleRequest;
+  private async scheduleReport(ctx: Context) {
+    const user: User = ctx.state.user as User;
+    const scheduleOption: ReportScheduleRequest = ctx.request
+      .body as ReportScheduleRequest;
 
-        await this.reportsService.scheduleReport({
-            ...scheduleOption,
-            organizationUuid: user.activeOrganization.uuid,
-        })
+    await this.reportsService.scheduleReport({
+      ...scheduleOption,
+      organizationUuid: user.activeOrganization.uuid,
+    });
 
-        ctx.body = {
-            message: "Report schedule created successfully",
-        };
-        ctx.status = 201;
-    }
+    ctx.body = {
+      message: "Report schedule created successfully",
+    };
+    ctx.status = 201;
+  }
 
-    private async updateSchedulingOption(ctx: Context) {
-        const user: User = ctx.state.user as User;
-        const scheduleOption: ReportScheduleRequest = ctx.request
-            .body as ReportScheduleRequest;
-        const uuid = ctx.params.uuid as string;
+  private async updateSchedulingOption(ctx: Context) {
+    const user: User = ctx.state.user as User;
+    const scheduleOption: ReportScheduleRequest = ctx.request
+      .body as ReportScheduleRequest;
+    const uuid = ctx.params.uuid as string;
 
-        await this.reportsService.updateSchedulingOption(
-            uuid,
-            {
-                ...scheduleOption,
-                organizationUuid: user.activeOrganization.uuid,
-            }
-        )
+    await this.reportsService.updateSchedulingOption(uuid, {
+      ...scheduleOption,
+      organizationUuid: user.activeOrganization.uuid,
+    });
 
-        ctx.body = {
-            message: "Report schedule updated successfully",
-        };
-        ctx.status = 200;
-    }
+    ctx.body = {
+      message: "Report schedule updated successfully",
+    };
+    ctx.status = 200;
+  }
 
-    private async getSchedulingOption(ctx: Context) {
-        const uuid = ctx.params.uuid as string;
+  private async getSchedulingOption(ctx: Context) {
+    const uuid = ctx.params.uuid as string;
 
-        ctx.body = await this.reportsService.getSchedulingOption(uuid);
-        ctx.status = 200;
-    }
+    ctx.body = await this.reportsService.getSchedulingOption(uuid);
+    ctx.status = 200;
+  }
 
-    private async getAvailableMetrics(ctx: Context) {
-        const metrics: any = {
-            kpis: ['spend', 'impressions', 'clicks', 'cpc', 'ctr', 'actions', 'action_values', 'purchase_roas', 'reach'],
-            graphs: ['spend', 'impressions', 'clicks', 'cpc', 'ctr', 'purchaseRoas', 'conversionValue', 'purchases', 'addToCart', 'initiatedCheckouts', 'costPerPurchase', 'costPerCart'],
-            ads: ['spend', 'addToCart', 'purchases', 'roas'],
-            campaigns: ['spend', 'purchases', 'conversionRate', 'purchaseRoas'],
-        }
-        ctx.body = metrics
-        ctx.status = 200;
-    }
-
-
+  private async getAvailableMetrics(ctx: Context) {
+      ctx.body = {
+          kpis: [
+              'spend',
+              'impressions',
+              'clicks',
+              'cpc',
+              'ctr',
+              'cpm',
+              'cpp',
+              'reach',
+              'actions',
+              'action_values',
+              'purchase_roas'
+          ],
+          graphs: [
+              'spend',
+              'impressions',
+              'clicks',
+              'cpc',
+              'ctr',
+              'cpm',
+              'cpp',
+              'reach',
+              'actions',
+              'action_values',
+              'purchase_roas'
+          ],
+          ads: [
+              'spend',
+              'purchases',
+              'addToCart',
+              'roas',
+              'impressions',
+              'clicks',
+              'ctr',
+              'cpc',
+              'thumbnailUrl',
+              'sourceUrl'
+          ],
+          campaigns: [
+              'campaign_id',
+              'campaign_name',
+              'spend',
+              'impressions',
+              'clicks',
+              'ctr',
+              'actions'
+          ]
+    };
+    ctx.status = 200;
+  }
 }

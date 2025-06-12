@@ -12,10 +12,8 @@ export class FacebookDataUtil {
 
         const fetches: Record<string, Promise<any[]>> = {};
 
-        fetches.ads = api.getInsightsSmart(
-            "ad",
-            metrics.ads?.length ? metrics.ads : FacebookMetricPresets.adPerformance,
-            { datePreset, actionBreakdowns: ['action_type'] }
+        fetches.ads = api.getAdInsightsWithThumbnails(
+            api, datePreset
         );
 
         fetches.KPIs = api.getInsightsSmart(
@@ -148,10 +146,10 @@ export class FacebookDataUtil {
 
     private static getBest10AdsByROAS(ads: any[]): any[] {
         return ads
-            .filter((ad) => ad.insights?.data?.[0]?.impressions)
+            .filter((ad) => ad.impressions)
             .sort((a, b) => {
-                const roasA = parseFloat(a.insights.data[0].impressions);
-                const roasB = parseFloat(b.insights.data[0].impressions);
+                const roasA = parseFloat(a.impressions);
+                const roasB = parseFloat(b.impressions);
                 return roasB - roasA;
             })
             .slice(0, 10);
@@ -160,61 +158,77 @@ export class FacebookDataUtil {
     private static async processAds(
         ads: any[],
         organizationUuid: string,
-        accountId: string,
+        accountId: string
     ) {
         const shownAds = this.getBest10AdsByROAS(ads);
-
-        const reportAds = shownAds.map((ad) => ({
-            adCreativeId: ad.creative.id,
-            thumbnailUrl: "",
-            spend: ad.insights.data[0].spend,
-            addToCart:
-                ad.insights.data[0].actions?.find(
-                    (action: any) => action.action_type === "add_to_cart",
-                )?.value || "0",
-            purchases:
-                ad.insights.data[0].actions?.find(
-                    (action: any) => action.action_type === "purchase",
-                )?.value || "0",
-            roas: ad.insights.data[0].purchase_roas?.[0].value || "0",
-            sourceUrl: "",
-        }));
-        console.log(reportAds);
-
         const api = await FacebookApi.create(organizationUuid, accountId);
 
-        const creativeAssets = await Promise.all(
-            shownAds.map(async (ad) => {
-                return await api.getCreativeAsset(ad.creative.id);
-            }),
-        );
+        const reportAds = shownAds.map((ad) => {
+            const getActionValue = (type: string) =>
+                ad.actions?.find((a: any) => a.action_type === type)?.value ?? "0";
 
-        await Promise.all(
-            creativeAssets.map(async (creativeAsset, index) => {
-                const { effective_instagram_media_id, effective_object_story_id } =
-                    creativeAsset;
-                const reportAd = reportAds[index];
+            return {
+                adId: ad.ad_id,
+                adCreativeId: null,
+                thumbnailUrl: "",
+                spend: ad.spend,
+                addToCart: getActionValue("add_to_cart"),
+                purchases: getActionValue("purchase"),
+                roas: ad.purchase_roas?.[0]?.value || "0",
+                sourceUrl: "",
+            };
+        });
 
-                if (effective_instagram_media_id) {
-                    const igMedia = await api.getInstagramMedia(effective_instagram_media_id);
+        const adIds = shownAds.map((a) => a.ad_id).filter(Boolean);
+        const adEntities = await api.getEntitiesBatch(adIds, ["id", "creative{id}"]);
 
-                    reportAd.thumbnailUrl =
-                        igMedia.media_type === "IMAGE" && !igMedia.thumbnail_url
-                            ? igMedia.media_url
-                            : igMedia.thumbnail_url;
-                    reportAd.sourceUrl = igMedia.permalink;
-                } else if(effective_object_story_id) {
-                    const postId = effective_object_story_id.split("_")[1];
+        const creativeIds = adEntities
+          .map((ad: { creative: { id: any } }) => ad.creative?.id)
+          .filter((id: any): id is string => !!id);
 
-                    const post = await api.getPost(postId,);
+        const creativeAssets = await api.getEntitiesBatch(creativeIds, [
+            "id",
+            "effective_instagram_media_id",
+            "effective_object_story_id",
+            "thumbnail_url",
+            "instagram_permalink_url"
+        ]);
 
-                    reportAd.thumbnailUrl =
-                        post.adcreatives.data[0].thumbnail_url
+        reportAds.forEach((reportAd) => {
+            const adEntity = adEntities.find(
+              (a: { id: any }) => a.id === reportAd.adId,
+            );
+            reportAd.adCreativeId = adEntity?.creative?.id || null;
+        });
 
-                    reportAd.sourceUrl = post.permalink_url || "";
-                }
-            }))
+        await Promise.all(reportAds.map(async (reportAd) => {
+            const creativeAsset = creativeAssets.find(
+              (c: { id: string }) => c.id === reportAd.adCreativeId,
+            );
+            if (!creativeAsset) return;
 
+            const {
+                effective_instagram_media_id,
+                effective_object_story_id,
+                thumbnail_url,
+                instagram_permalink_url
+            } = creativeAsset;
+
+            if (effective_instagram_media_id) {
+                const igMedia = await api.getInstagramMedia(effective_instagram_media_id);
+                reportAd.thumbnailUrl = igMedia.media_type === "IMAGE" && !igMedia.thumbnail_url
+                    ? igMedia.media_url
+                    : igMedia.thumbnail_url;
+                reportAd.sourceUrl = igMedia.permalink;
+            } else if (effective_object_story_id) {
+                const postId = effective_object_story_id.split("_")[1];
+                const post = await api.getPost(postId);
+                reportAd.thumbnailUrl = post.adcreatives?.data?.[0]?.thumbnail_url || thumbnail_url || "";
+                reportAd.sourceUrl = post.permalink_url || instagram_permalink_url || "";
+            } else {
+                reportAd.thumbnailUrl = thumbnail_url || "";
+            }
+        }));
 
         return reportAds;
     }
