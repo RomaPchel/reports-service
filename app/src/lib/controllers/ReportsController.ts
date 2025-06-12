@@ -86,17 +86,11 @@ export class ReportsController extends Router {
               'purchase_roas'
           ],
           graphs: [
-              'spend',
-              'impressions',
-              'clicks',
-              'cpc',
-              'ctr',
-              'cpm',
-              'cpp',
-              'reach',
-              'actions',
-              'action_values',
-              'purchase_roas'
+              "spend", "impressions", "clicks", "cpc", "ctr",
+              "purchaseRoas", "conversionValue", "purchases",
+              "addToCart", "initiatedCheckouts", "costPerPurchase",
+              "costPerCart", "engagement", "conversionRate",
+              "date_start", "date_stop", "action_values"
           ],
           ads: [
               'spend',
