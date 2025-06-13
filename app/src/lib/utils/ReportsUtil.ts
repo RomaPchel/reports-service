@@ -100,7 +100,7 @@ export class ReportsUtil {
         reportUrl: publicUrl,
         clientUuid: client.uuid,
         organizationUuid: client.organization.uuid,
-        reportId: report.uuid,
+        reportUuid: report.uuid,
       };
 
       const topic = data.reviewNeeded
