@@ -3,6 +3,7 @@ import type { Context } from "koa";
 import { ReportsService } from "../services/ReportsService.js";
 import { User } from "marklie-ts-core";
 import type { ReportScheduleRequest } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
+import { AVAILABLE_KPI_METRICS } from "lib/utils/FacebookDataUtil.js";
 
 export class ReportsController extends Router {
   private readonly reportsService: ReportsService;
@@ -72,19 +73,7 @@ export class ReportsController extends Router {
 
   private async getAvailableMetrics(ctx: Context) {
       ctx.body = {
-          kpis: [
-              'spend',
-              'impressions',
-              'clicks',
-              'cpc',
-              'ctr',
-              'cpm',
-              'cpp',
-              'reach',
-              'actions',
-              'action_values',
-              'purchase_roas'
-          ],
+          kpis: Object.keys(AVAILABLE_KPI_METRICS),
           graphs: [
               "spend", "impressions", "clicks", "cpc", "ctr",
               "purchaseRoas", "conversionValue", "purchases",
