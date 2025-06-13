@@ -36,13 +36,14 @@ export class ReportsController extends Router {
     const scheduleOption: ReportScheduleRequest = ctx.request
       .body as ReportScheduleRequest;
 
-    await this.reportsService.scheduleReport({
+    const scheduleUuid: string | void = await this.reportsService.scheduleReport({
       ...scheduleOption,
       organizationUuid: user.activeOrganization.uuid,
     });
 
     ctx.body = {
       message: "Report schedule created successfully",
+        uuid: scheduleUuid
     };
     ctx.status = 201;
   }

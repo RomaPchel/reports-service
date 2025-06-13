@@ -8,6 +8,7 @@ import {
   Report,
   ClientFacebookAdAccount,
   PubSubWrapper,
+  ActivityLog,
 } from "marklie-ts-core";
 import puppeteer from "puppeteer";
 import type {
@@ -109,6 +110,17 @@ export class ReportsUtil {
       logger.info("Sending to notification.")
 
       await PubSubWrapper.publishMessage(topic, payload);
+
+      const log = database.em.create(ActivityLog, {
+        organizationUuid: client.organization.uuid,
+        action: 'report_generated',
+        targetType: 'report',
+        targetUuid: report.uuid,
+        clientUuid: client.uuid,
+        actor: 'system'
+      });
+
+      await database.em.persistAndFlush(log);
 
       return { success: true };
     } catch (e) {

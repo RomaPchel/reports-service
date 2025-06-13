@@ -60,7 +60,7 @@ export class ReportsService {
 
           await database.em.persistAndFlush(schedule);
 
-          return cronExpression;
+          return schedule.uuid;
       }catch (e) {
           logger.error(e);
       }
