@@ -108,6 +108,31 @@ export const AVAILABLE_KPI_METRICS: {
 
 type AvailableKpiMetric = keyof typeof AVAILABLE_KPI_METRICS;
 
+export const AVAILABLE_GRAPH_METRICS: {
+    [key: string]: string[]
+} = {
+    spend: ['spend'],
+    impressions: ['impressions'],
+    clicks: ['clicks'],
+    cpc: ['cpc'],
+    ctr: ['ctr'],
+    cpm: ['cpm'],
+    cpp: ['cpp'],
+    reach: ['reach'],
+    purchase_roas: ['purchase_roas'],
+
+    conversion_value: ['action_values'],
+
+    purchases: ['actions'],
+    add_to_cart: ['actions'],
+    initiated_checkouts: ['actions'],
+    engagement: ['actions'],
+    
+    cost_per_purchase: ['spend', 'actions'],
+    cost_per_add_to_cart: ['spend', 'actions'],
+    conversion_rate: ['clicks', 'actions']
+}
+
 export class FacebookDataUtil {
 
     public static async getAllReportData(
@@ -121,21 +146,23 @@ export class FacebookDataUtil {
         const fetches: Record<string, Promise<any[]>> = {};
 
         const selectedKpiMetrics: string[] = metrics.kpis?.length ? metrics.kpis : [];
-        const kpiApiFields = this.determineFieldsBasedOnSelectedMetrics(selectedKpiMetrics);
+        const kpiApiFields = this.determineKpisFieldsBasedOnSelectedMetrics(selectedKpiMetrics);
 
         const campaignMetrics = metrics.campaigns?.length ? metrics.campaigns : FacebookMetricPresets.campaigns;
         const campaignApiFields = campaignMetrics.filter((m: string) => FB_NATIVE_FIELDS.has(m));
 
-        const graphsMetrics = metrics.graphs?.length ? metrics.graphs : FacebookMetricPresets.campaigns;
-        const graphApiFields = graphsMetrics.filter((m: string) => FB_NATIVE_FIELDS.has(m));
+        const obligatoryGraphsMetrics = ["date_start", "date_stop"];
+        const selectedGraphsMetrics = metrics.graphs?.length ? 
+            [ ...metrics.graphs, ...obligatoryGraphsMetrics ] : [];
+        const graphApiFields = this.determineGraphFieldsBasedOnSelectedMetrics(selectedGraphsMetrics);
 
-        if (metrics.kpis?.length) fetches.KPIs = api.getInsightsSmart("account", kpiApiFields, { datePreset });
+        if (selectedKpiMetrics.length) fetches.KPIs = api.getInsightsSmart("account", kpiApiFields, { datePreset });
 
         if (metrics.ads?.length) fetches.ads = api.getAdInsightsWithThumbnails(api, datePreset);
 
         if (metrics.campaigns?.length) fetches.campaigns = api.getInsightsSmart("campaign", campaignApiFields, { datePreset });
 
-        if (metrics.graphs?.length) fetches.graphs = api.getInsightsSmart("campaign", graphApiFields, { datePreset });
+        if (selectedGraphsMetrics.length) fetches.graphs = api.getInsightsSmart("account", graphApiFields, { datePreset, timeIncrement: 1 });
 
         const resolved = await Promise.all(
             Object.entries(fetches).map(([key, promise]) =>
@@ -153,11 +180,11 @@ export class FacebookDataUtil {
             ads: processedAds,
             KPIs: result.KPIs?.length ? this.normalizeKPIs(result.KPIs[0], selectedKpiMetrics) : null,
             campaigns: result.campaigns ? this.normalizeCampaigns(result.campaigns, campaignMetrics) : [],
-            graphs: result.graphs ? this.normalizeGraphs(result.graphs, graphsMetrics) : [],
+            graphs: result.graphs ? this.normalizeGraphs(result.graphs, selectedGraphsMetrics) : [],
         };
     }
 
-    static determineFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
+    static determineKpisFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
         const metrics = selectedMetrics.map(metric => AVAILABLE_KPI_METRICS[metric]).flat();
         return [...new Set(metrics)];
     }
@@ -221,31 +248,31 @@ export class FacebookDataUtil {
             const getActionMonetaryValue = (type: string): number =>
                 Number(g.action_values?.find((a: any) => a.action_type === type)?.value || 0);
 
-            const purchaseRoas = parseFloat(g.purchase_roas?.[0]?.value || "0");
-            const purchases = getActionValue("purchase");
-            const addToCart = getActionValue("add_to_cart");
-            const initiatedCheckouts = getActionValue("initiate_checkout");
-            const engagement = getActionValue("post_engagement") || getActionValue("page_engagement");
-
-            const conversionValue = getActionMonetaryValue("purchase");
+            const purchases = getActionValue("omni_purchase");
+            const add_to_cart = getActionValue("omni_add_to_cart");
+            const initiated_checkouts = getActionValue("initiate_checkout");
+            const conversion_value = getActionMonetaryValue("omni_purchase");
 
             const allMetrics: Record<string, any> = {
-                campaign_id: g.campaign_id,
-                campaign_name: g.campaign_name,
-                spend: spend,
+                spend,
                 impressions,
                 clicks,
-                ctr: parseFloat(g.ctr || "0"),
-                cpc: clicks > 0 ? spend / clicks : 0,
-                purchaseRoas,
-                conversionValue,
-                engagement,
+                cpc: g.cpc,
+                ctr: g.ctr,
+                cpm: g.cpm,
+                cpp: g.cpp,
+                reach: g.reach,
+                purchase_roas: g.purchase_roas?.[0]?.value || 0,
                 purchases,
-                costPerPurchase: purchases > 0 ? spend / purchases : 0,
-                costPerCart: addToCart > 0 ? spend / addToCart : 0,
-                addToCart,
-                initiatedCheckouts,
-                conversionRate: clicks > 0 ? (purchases / clicks) * 100 : 0,
+                add_to_cart,
+                initiated_checkouts,
+                conversion_value,
+
+                cost_per_purchase: purchases > 0 ? (spend / purchases) : 0,
+                cost_per_add_to_cart: add_to_cart > 0 ? (spend / add_to_cart) : 0,
+                conversion_rate: clicks > 0 ? (purchases / clicks) * 100 : 0,
+                engagement: getActionValue("post_engagement") || getActionValue("page_engagement") || 0,
+
                 date_start: g.date_start,
                 date_stop: g.date_stop,
             };
@@ -254,6 +281,16 @@ export class FacebookDataUtil {
                 metrics.map((key) => [key, allMetrics[key]]).filter(([, value]) => value !== undefined)
             );
         });
+    }
+
+    static determineGraphFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
+        let metrics = selectedMetrics.map(metric => {
+            if (AVAILABLE_GRAPH_METRICS[metric]) {
+                return AVAILABLE_GRAPH_METRICS[metric]
+            }
+            return [metric];
+        }).flat();
+        return [...new Set(metrics)];
     }
 
     private static normalizeCampaigns(campaigns: any[], metrics: string[]): any[] {

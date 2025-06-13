@@ -96,6 +96,7 @@ export class FacebookApi {
         customDateRange?: { since: string; until: string };
         breakdowns?: string[];
         actionBreakdowns?: string[];
+        timeIncrement?: number;
       } = {}
   ): Promise<any[]> {
     const {
@@ -103,6 +104,7 @@ export class FacebookApi {
       customDateRange,
       breakdowns = [],
       actionBreakdowns = [],
+      timeIncrement = undefined,
     } = options;
 
     const isLargeQuery =
@@ -116,6 +118,7 @@ export class FacebookApi {
       level,
       ...(customDateRange ? { time_range: customDateRange } : { date_preset: datePreset }),
       __cppo: 1,
+      ...(timeIncrement ? { time_increment: timeIncrement } : {}),
     };
 
     if (breakdowns.length) params.breakdowns = breakdowns.join(",");
