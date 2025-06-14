@@ -3,7 +3,7 @@ import type { Context } from "koa";
 import { ReportsService } from "../services/ReportsService.js";
 import { User } from "marklie-ts-core";
 import type { ReportScheduleRequest } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
-import { AVAILABLE_ADS_METRICS, AVAILABLE_GRAPH_METRICS, AVAILABLE_KPI_METRICS } from "lib/utils/FacebookDataUtil.js";
+import { AVAILABLE_ADS_METRICS, AVAILABLE_CAMPAIGN_METRICS, AVAILABLE_GRAPH_METRICS, AVAILABLE_KPI_METRICS } from "lib/utils/FacebookDataUtil.js";
 
 export class ReportsController extends Router {
   private readonly reportsService: ReportsService;
@@ -77,15 +77,7 @@ export class ReportsController extends Router {
           kpis: Object.keys(AVAILABLE_KPI_METRICS),
           graphs: Object.keys(AVAILABLE_GRAPH_METRICS),
           ads: Object.keys(AVAILABLE_ADS_METRICS),
-          campaigns: [
-              'campaign_id',
-              'campaign_name',
-              'spend',
-              'impressions',
-              'clicks',
-              'ctr',
-              'actions'
-          ]
+          campaigns: Object.keys(AVAILABLE_CAMPAIGN_METRICS)
     };
     ctx.status = 200;
   }
