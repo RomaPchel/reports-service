@@ -1,80 +1,5 @@
 import { FacebookApi, FacebookMetricPresets } from "../apis/FacebookApi.js";
 
-export type CampaignMetric =
-    | 'campaign_name'
-    | 'campaign_id'
-    | 'spend'
-    | 'impressions'
-    | 'clicks'
-    | 'ctr'
-    | 'actions'
-    | 'purchases'
-    | 'conversionRate'
-    | 'purchaseRoas';
-
-export type AdMetric =
-    | 'ad_id'
-    | 'spend'
-    | 'clicks'
-    | 'impressions'
-    | 'cpc'
-    | 'ctr'
-    | 'actions'
-    | 'action_values'
-    | 'purchase_roas'
-    | 'purchases'
-    | 'addToCart'
-    | 'roas'
-    | 'creative'
-    | 'thumbnail_url';
-
-export type KpiMetric =
-    | 'spend'
-    | 'purchase_roas'
-    | 'conversionValue'
-    | 'purchases'
-    | 'impressions'
-    | 'clicks'
-    | 'cpc'
-    | 'ctr'
-    | 'costPerPurchase'
-    | 'addToCart'
-    | 'costPerAddToCart'
-    | 'initiatedCheckouts'
-    | 'reach'
-    | 'actions'
-    | 'action_values';
-
-export type GraphMetric =
-    | 'spend'
-    | 'impressions'
-    | 'clicks'
-    | 'cpc'
-    | 'ctr'
-    | 'purchaseRoas'
-    | 'conversionValue'
-    | 'purchases'
-    | 'addToCart'
-    | 'initiatedCheckouts'
-    | 'costPerPurchase'
-    | 'costPerCart'
-    | 'engagement'
-    | 'conversionRate';
-
-export type CustomMetric =
-    | 'costPerPurchase'
-    | 'costPerAddToCart'
-
-
-export type CombinedMetric = KpiMetric | CustomMetric;
-
-export interface AvailableMetrics {
-    campaigns: CampaignMetric[];
-    ads: AdMetric[];
-    kpis: CombinedMetric[];
-    graphs: GraphMetric[];
-}
-
 export interface ReportData {
     ads: any[];
     KPIs: KPIs | null;
@@ -155,9 +80,7 @@ const FB_NATIVE_FIELDS = new Set([
     "campaign_id", "campaign_name", "ad_id", "account_id"
 ]);
  
-export const AVAILABLE_KPI_METRICS: {
-    [key: string]: string[]
-} = {
+export const AVAILABLE_KPI_METRICS: Record<string, string[]> = {
     spend: ['spend'],
     impressions: ['impressions'],
     clicks: ['clicks'],
@@ -182,9 +105,7 @@ export const AVAILABLE_KPI_METRICS: {
 
 type AvailableKpiMetric = keyof typeof AVAILABLE_KPI_METRICS;
 
-export const AVAILABLE_GRAPH_METRICS: {
-    [key: string]: string[]
-} = {
+export const AVAILABLE_GRAPH_METRICS: Record<string, string[]> = {
     spend: ['spend'],
     impressions: ['impressions'],
     clicks: ['clicks'],
@@ -207,9 +128,9 @@ export const AVAILABLE_GRAPH_METRICS: {
     conversion_rate: ['clicks', 'actions']
 }
 
-export const AVAILABLE_ADS_METRICS: {
-    [key: string]: string[]
-} = {
+type AvailableGraphMetric = keyof typeof AVAILABLE_GRAPH_METRICS;
+
+export const AVAILABLE_ADS_METRICS: Record<string, string[]> = {
     spend: ['spend'], //
     impressions: ['impressions'], //
     clicks: ['clicks'], // 
@@ -232,6 +153,15 @@ export const AVAILABLE_ADS_METRICS: {
     conversion_rate: ['clicks', 'actions']
 }
 
+type AvailableAdMetric = keyof typeof AVAILABLE_ADS_METRICS;
+
+export interface AvailableMetrics {
+    kpis: AvailableKpiMetric[];
+    graphs: AvailableGraphMetric[];
+    ads: AvailableAdMetric[];
+    campaigns: string[];
+}
+
 export class FacebookDataUtil {
 
     static determineAdsFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
@@ -243,7 +173,7 @@ export class FacebookDataUtil {
         organizationUuid: string,
         accountId: string,
         datePreset: string,
-        metrics: any
+        metrics: AvailableMetrics
     ): Promise<ReportData> {
         const api = await FacebookApi.create(organizationUuid, accountId);
 
