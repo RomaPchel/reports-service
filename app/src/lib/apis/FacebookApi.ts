@@ -31,8 +31,8 @@ export const FacebookMetricPresets = {
 };
 
 export class FacebookApi {
-  private readonly MAX_POLL_ATTEMPTS = 30;
-  private readonly POLL_INTERVAL_MS = 3000;
+  private readonly MAX_POLL_ATTEMPTS = 100;
+  private readonly POLL_INTERVAL_MS = 6000;
 
   private api: AxiosInstance;
 
@@ -188,19 +188,12 @@ export class FacebookApi {
     }
   }
 
-  public async getAdInsightsWithThumbnails(api: FacebookApi, datePreset: string): Promise<any[]> {
+  public async getAdInsightsWithThumbnails(api: FacebookApi, fields: string[], datePreset: string): Promise<any[]> {
     const insights = await api.getInsightsSmart(
         "ad",
         [
+          ...fields,
           "ad_id",
-          "spend",
-          "clicks",
-          "purchase_roas",
-          "impressions",
-          "cpc",
-          "ctr",
-          "actions",
-          "action_values"
         ],
         {
           datePreset,
