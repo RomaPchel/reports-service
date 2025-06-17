@@ -1,192 +1,568 @@
 import { FacebookApi } from "../apis/FacebookApi.js";
 
+export interface ReportData {
+    ads: Ad[];
+    KPIs: KPIs | null;
+    campaigns: Campaign[];
+    graphs: Graph[];
+}
+
+export interface KPIs {
+    spend?: number;
+    impressions?: number;
+    clicks?: number;
+    cpc?: number;
+    ctr?: number;
+    cpm?: number;
+    cpp?: number;
+    reach?: number;
+    purchase_roas?: number;
+    purchases?: number;
+    add_to_cart?: number;
+    initiated_checkouts?: number;
+    conversion_value?: number;
+    cost_per_purchase?: number;
+    cost_per_add_to_cart?: number;
+    conversion_rate?: number;
+    engagement?: number;
+}
+
+export interface Graph {
+    spend?: number;
+    impressions?: number;
+    clicks?: number;
+    cpc?: number;
+    ctr?: number;
+    cpm?: number;
+    cpp?: number;
+    reach?: number;
+    purchase_roas?: number;
+    purchases?: number;
+    add_to_cart?: number;
+    initiated_checkouts?: number;
+    conversion_value?: number;
+    cost_per_purchase?: number;
+    cost_per_add_to_cart?: number;
+    conversion_rate?: number;
+    engagement?: number;
+    date_start: string;
+    date_stop: string;
+}
+
+export interface Ad {
+    adId: string;
+    adCreativeId: string;
+    thumbnailUrl: string;
+    sourceUrl: string;
+    
+    spend?: number;
+    impressions?: number;
+    clicks?: number;
+    cpc?: number;
+    ctr?: number;
+    cpm?: number;
+    cpp?: number;
+    reach?: number;
+    purchase_roas?: number;
+    purchases?: number;
+    add_to_cart?: number;
+    initiated_checkouts?: number;
+    conversion_value?: number;
+    cost_per_purchase?: number;
+    cost_per_add_to_cart?: number;
+    conversion_rate?: number;
+    engagement?: number;
+}
+
+export interface Campaign {
+    index: number;
+    campaign_name: string;
+    
+    spend?: number;
+    impressions?: number;
+    clicks?: number;
+    cpc?: number;
+    ctr?: number;
+    cpm?: number;
+    cpp?: number;
+    reach?: number;
+    purchase_roas?: number;
+    purchases?: number;
+    add_to_cart?: number;
+    initiated_checkouts?: number;
+    conversion_value?: number;
+    cost_per_purchase?: number;
+    cost_per_add_to_cart?: number;
+    conversion_rate?: number;
+    engagement?: number;
+}
+ 
+export const AVAILABLE_KPI_METRICS: Record<string, string[]> = {
+    spend: ['spend'],
+    impressions: ['impressions'],
+    clicks: ['clicks'],
+    cpc: ['cpc'],
+    ctr: ['ctr'],
+    cpm: ['cpm'],
+    cpp: ['cpp'],
+    reach: ['reach'],
+    purchase_roas: ['purchase_roas'],
+
+    conversion_value: ['action_values'],
+
+    purchases: ['actions'],
+    add_to_cart: ['actions'],
+    initiated_checkouts: ['actions'],
+    engagement: ['actions'],
+    
+    cost_per_purchase: ['spend', 'actions'],
+    cost_per_add_to_cart: ['spend', 'actions'],
+    conversion_rate: ['clicks', 'actions'],
+}
+
+type AvailableKpiMetric = keyof typeof AVAILABLE_KPI_METRICS;
+
+export const AVAILABLE_GRAPH_METRICS: Record<string, string[]> = {
+    spend: ['spend'],
+    impressions: ['impressions'],
+    clicks: ['clicks'],
+    cpc: ['cpc'],
+    ctr: ['ctr'],
+    cpm: ['cpm'],
+    cpp: ['cpp'],
+    reach: ['reach'],
+    purchase_roas: ['purchase_roas'],
+
+    conversion_value: ['action_values'],
+
+    purchases: ['actions'],
+    add_to_cart: ['actions'],
+    initiated_checkouts: ['actions'],
+    engagement: ['actions'],
+    
+    cost_per_purchase: ['spend', 'actions'],
+    cost_per_add_to_cart: ['spend', 'actions'],
+    conversion_rate: ['clicks', 'actions']
+}
+
+type AvailableGraphMetric = keyof typeof AVAILABLE_GRAPH_METRICS;
+
+export const AVAILABLE_ADS_METRICS: Record<string, string[]> = {
+    spend: ['spend'], 
+    impressions: ['impressions'], 
+    clicks: ['clicks'], 
+    cpc: ['cpc'], 
+    ctr: ['ctr'], 
+    cpm: ['cpm'],
+    cpp: ['cpp'],
+    reach: ['reach'],
+    purchase_roas: ['purchase_roas'], 
+
+    conversion_value: ['action_values'], 
+
+    purchases: ['actions'], 
+    add_to_cart: ['actions'], 
+    initiated_checkouts: ['actions'], 
+    engagement: ['actions'], 
+    
+    cost_per_purchase: ['spend', 'actions'],
+    cost_per_add_to_cart: ['spend', 'actions'],
+    conversion_rate: ['clicks', 'actions']
+}
+
+type AvailableAdMetric = keyof typeof AVAILABLE_ADS_METRICS;
+
+export const AVAILABLE_CAMPAIGN_METRICS: Record<string, string[]> = {
+    spend: ['spend'], 
+    impressions: ['impressions'], 
+    clicks: ['clicks'], 
+    cpc: ['cpc'], 
+    ctr: ['ctr'], 
+    cpm: ['cpm'],
+    cpp: ['cpp'],
+    reach: ['reach'],
+    purchase_roas: ['purchase_roas'],
+
+    conversion_value: ['action_values'],
+
+    purchases: ['actions'], 
+    add_to_cart: ['actions'], 
+    initiated_checkouts: ['actions'], 
+    engagement: ['actions'], 
+    
+    cost_per_purchase: ['spend', 'actions'],
+    cost_per_add_to_cart: ['spend', 'actions'],
+    conversion_rate: ['clicks', 'actions']
+}
+
+type AvailableCampaignMetric = keyof typeof AVAILABLE_CAMPAIGN_METRICS;
+
+export interface AvailableMetrics {
+    kpis: AvailableKpiMetric[];
+    graphs: AvailableGraphMetric[];
+    ads: AvailableAdMetric[];
+    campaigns: AvailableCampaignMetric[];
+}
+
 export class FacebookDataUtil {
 
-  public static async getAllReportData(
-    organizationUuid: string,
-    accountId: string,
-    datePreset: string,
-  ) {
-      const api = await FacebookApi.create(organizationUuid, accountId);
+    static determineCampaignFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
+        let metrics = selectedMetrics.map(metric => {
+            if (AVAILABLE_CAMPAIGN_METRICS[metric]) {
+                return AVAILABLE_CAMPAIGN_METRICS[metric]
+            }
+            return [metric];
+        }).flat();
+        return [...new Set(metrics)];
+    }
 
-      const [ ads, KPIs, campaigns, graphs] = await Promise.all([
-          api.getAds(datePreset),
-          api.getAccountInsights(datePreset),
-          api.getCampaigns(datePreset),
-          api.getCampaignInsights(datePreset),
-          ]);
+    public static async getAllReportData(
+        organizationUuid: string,
+        accountId: string,
+        datePreset: string,
+        metrics: AvailableMetrics
+    ): Promise<ReportData> {
+        const api = await FacebookApi.create(organizationUuid, accountId);
 
-      const processedAds = await this.processAds(
-          ads.data,
-          organizationUuid,
-          accountId,
-      );
+        const fetches: Record<string, Promise<any[]>> = {};
 
-      return {  ads: processedAds, KPIs: this.normalizeKPIs(KPIs[0]), campaigns: this.normalizeCampaigns(campaigns), graphs: this.normalizeGraphs(graphs) };
-  }
+        const selectedKpiMetrics: string[] = metrics.kpis?.length ? metrics.kpis : [];
+        const kpiApiFields = this.determineKpisFieldsBasedOnSelectedMetrics(selectedKpiMetrics);
 
-  private static normalizeGraphs(graphs: any[]) {
-      return graphs.map((g) => {
-          const spend = parseFloat(g.spend || "0");
-          const clicks = parseInt(g.clicks || "0");
-          const impressions = parseInt(g.impressions || "0");
+        const selectedAdsMetrics: string[] = metrics.ads?.length ? metrics.ads : [];
+        const adsApiFields = this.determineAdsFieldsBasedOnSelectedMetrics(selectedAdsMetrics);
 
-          const actions = Object.fromEntries(
-              (g.actions || []).map((a: any) => [a.action_type, Number(a.value)])
-          );
+        const obligatoryGraphsMetrics = ["date_start", "date_stop"];
+        const selectedGraphsMetrics = metrics.graphs?.length ? 
+            [ ...metrics.graphs, ...obligatoryGraphsMetrics ] : [];
+        const graphApiFields = this.determineGraphFieldsBasedOnSelectedMetrics(selectedGraphsMetrics);
 
-          const purchaseRoas = g.purchase_roas?.[0]?.value || 0;
-          const purchases = actions["purchase"] || 0;
-          const addToCart = actions["add_to_cart"] || 0;
-          const initiatedCheckouts = actions["initiate_checkout"] || 0;
-          const engagement = actions["post_engagement"] || actions["page_engagement"] || 0;
+        const obligatoryCampaignMetrics = ["campaign_id", "campaign_name"];
+        const campaignMetrics = metrics.campaigns?.length ? 
+            [ ...metrics.campaigns, ...obligatoryCampaignMetrics ] : [];
+        const campaignApiFields = this.determineCampaignFieldsBasedOnSelectedMetrics(campaignMetrics);
 
-          const conversionValue = g.action_values?.find((a: any) => a.action_type === "purchase")?.value || 0;
+        if (selectedKpiMetrics.length) fetches.KPIs = api.getInsightsSmart("account", kpiApiFields, { datePreset });
 
-          return {
-              campaign_id: g.campaign_id,
-              campaign_name: g.campaign_name,
-              spend: spend.toFixed(2),
-              impressions,
-              clicks,
-              ctr: parseFloat(g.ctr || 0).toFixed(2),
-              cpc: clicks > 0 ? (spend / clicks).toFixed(2) : "0.00",
-              purchaseRoas: parseFloat(purchaseRoas).toFixed(2),
-              conversionValue: parseFloat(conversionValue).toFixed(2),
-              engagement,
-              purchases,
-              costPerPurchase: purchases > 0 ? (spend / purchases).toFixed(2) : "0.00",
-              costPerCart: addToCart > 0 ? (spend / addToCart).toFixed(2) : "0.00",
-              addToCart,
-              initiatedCheckouts,
-              conversionRate: clicks > 0 ? ((purchases / clicks) * 100).toFixed(2) : "0.00",
-              date_start: g.date_start,
-              date_stop: g.date_stop,
-          };
-      });
-  }
+        if (selectedAdsMetrics.length) fetches.ads = api.getAdInsightsWithThumbnails(api, adsApiFields, datePreset);
 
-  private static normalizeCampaigns(campaigns: any[]): any[] {
-      return campaigns.map((c, index) => {
-          const actions = c.actions || [];
-          const purchasesAction = actions.find(
-            (a: { action_type: string }) => a.action_type === "purchase",
-          );
-          const purchases = parseInt(purchasesAction?.value || '0');
+        if (selectedGraphsMetrics.length) fetches.graphs = api.getInsightsSmart("account", graphApiFields, { datePreset, timeIncrement: 1 });
 
-          const spend = parseFloat(c.spend || '0');
-          const clicks = parseInt(c.clicks || '0');
-          const roas = parseFloat(c.purchase_roas?.[0]?.value || '0');
+        if (metrics.campaigns?.length) fetches.campaigns = api.getInsightsSmart("campaign", campaignApiFields, { datePreset });
 
-          const conversionRate = clicks > 0 ? ((purchases / clicks) * 100).toFixed(2) : '0.00';
+        const resolved = await Promise.all(
+            Object.entries(fetches).map(([key, promise]) =>
+                promise.then((data) => [key, data])
+            )
+        );
 
-          return {
-              index,
-              campaign_name: c.campaign_name,
-              spend: spend.toFixed(2),
-              purchases,
-              conversionRate,
-              purchaseRoas: roas.toFixed(2),
-          };
-      });
-  }
+        const result: Record<string, any> = Object.fromEntries(resolved);
 
-    private static normalizeKPIs(apiData: any) {
+        const ads = result.ads ? await this.processAds(result.ads, selectedAdsMetrics, organizationUuid, accountId) : [];
 
-      if (!apiData) {
-          return [];
-      }
-        const getActionValue = (type: string) =>
-            apiData.actions?.find((a: any) => a.action_type === type)?.value || 0;
+        const reportData: ReportData = {
+            ads: ads,
+            KPIs: result.KPIs?.length ? this.normalizeKPIs(result.KPIs[0], selectedKpiMetrics) : null,
+            campaigns: result.campaigns ? this.normalizeCampaigns(result.campaigns, campaignMetrics) : [],
+            graphs: result.graphs ? this.normalizeGraphs(result.graphs, selectedGraphsMetrics) : [],
+        };
 
-        const getActionMonetaryValue = (type: string) =>
-            apiData.action_values?.find((a: any) => a.action_type === type)?.value || 0;
+        return reportData;
+    }
 
-        return {
+    static determineKpisFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
+        const metrics = selectedMetrics.map(metric => AVAILABLE_KPI_METRICS[metric]).flat();
+        return [...new Set(metrics)];
+    }
+
+    private static normalizeKPIs(apiData: any, selectedMetrics: any[]): KPIs | null {
+        if (!apiData) return null;
+
+        const getActionValue = (type: string): number =>
+            Number(apiData.actions?.find((a: any) => a.action_type === type)?.value || 0);
+
+        const getActionMonetaryValue = (type: string): number =>
+            Number(apiData.action_values?.find((a: any) => a.action_type === type)?.value || 0);
+
+        const purchases = getActionValue("omni_purchase");
+        const add_to_cart = getActionValue("omni_add_to_cart");
+        const initiated_checkouts = getActionValue("initiate_checkout");
+        const conversion_value = getActionMonetaryValue("omni_purchase");
+
+        const allMetrics: KPIs = {
             spend: apiData.spend,
-            purchaseRoas: apiData.purchase_roas?.[0]?.value || 0,
-            conversionValue: getActionMonetaryValue("purchase"),
-            purchases: getActionValue("purchase"),
             impressions: apiData.impressions,
             clicks: apiData.clicks,
             cpc: apiData.cpc,
             ctr: apiData.ctr,
-            costPerPurchase: apiData.spend / (getActionValue("purchase") || 1),
-            addToCart: getActionValue("add_to_cart"),
-            costPerAddToCart: apiData.spend / (getActionValue("add_to_cart") || 1),
-            initiatedCheckouts: getActionValue("initiate_checkout"),
+            cpm: apiData.cpm,
+            cpp: apiData.cpp,
+            reach: apiData.reach,
+            purchase_roas: apiData.purchase_roas?.[0]?.value || 0,
+            purchases,
+            add_to_cart,
+            initiated_checkouts,
+            conversion_value,
+
+            cost_per_purchase: purchases > 0 ? (apiData.spend / purchases) : 0,
+            cost_per_add_to_cart: add_to_cart > 0 ? (apiData.spend / add_to_cart) : 0,
+            conversion_rate: apiData.clicks > 0 ? (purchases / apiData.clicks) * 100 : 0,
+            engagement: getActionValue("post_engagement") || getActionValue("page_engagement") || 0
         };
+
+        const filteredMetrics = Object.fromEntries(
+            Object.entries(allMetrics)
+                .filter(([key]) => selectedMetrics.includes(key as AvailableKpiMetric)) // leave only selected metrics
+                .filter(([_, value]) => value !== undefined)
+        );
+
+        return filteredMetrics;
     }
 
-  private static getBest10AdsByROAS(ads: any[]): any[] {
-      return ads
-          .filter((ad) => ad.insights?.data?.[0]?.purchase_roas?.[0]?.value)
-          .sort((a, b) => {
-              const roasA = parseFloat(a.insights.data[0].purchase_roas[0].value);
-              const roasB = parseFloat(b.insights.data[0].purchase_roas[0].value);
-              return roasB - roasA;
-          })
-          .slice(0, 10);
-  }
+    private static normalizeGraphs(graphs: any[], metrics: string[]) {
+        return graphs.map((g) => {
+            const spend = parseFloat(g.spend || "0");
+            const clicks = parseInt(g.clicks || "0");
+            const impressions = parseInt(g.impressions || "0");
 
-  private static async processAds(
-    ads: any[],
-    organizationUuid: string,
-    accountId: string,
-  ) {
-    const shownAds = this.getBest10AdsByROAS(ads);
+            const actions: Record<string, number> = Object.fromEntries(
+                (g.actions || []).map((a: any) => [a.action_type, Number(a.value)])
+            );
 
-      const reportAds = shownAds.map((ad) => ({
-          adCreativeId: ad.creative.id,
-          thumbnailUrl: "",
-          spend: ad.insights.data[0].spend,
-          addToCart:
-              ad.insights.data[0].actions?.find(
-                  (action: any) => action.action_type === "add_to_cart",
-              )?.value || "0",
-          purchases:
-              ad.insights.data[0].actions?.find(
-                  (action: any) => action.action_type === "purchase",
-              )?.value || "0",
-          roas: ad.insights.data[0].purchase_roas[0].value || "0",
-          sourceUrl: "",
-      }));
+            const getActionValue = (type: string): number => actions[type] || 0;
 
-      const api = await FacebookApi.create(organizationUuid, accountId);
+            const getActionMonetaryValue = (type: string): number =>
+                Number(g.action_values?.find((a: any) => a.action_type === type)?.value || 0);
 
-      const creativeAssets = await Promise.all(
-          shownAds.map(async (ad) => {
-              return await api.getCreativeAsset(ad.creative.id);
-          }),
-      );
+            const purchases = getActionValue("omni_purchase");
+            const add_to_cart = getActionValue("omni_add_to_cart");
+            const initiated_checkouts = getActionValue("initiate_checkout");
+            const conversion_value = getActionMonetaryValue("omni_purchase");
 
-      await Promise.all(
-          creativeAssets.map(async (creativeAsset, index) => {
-              const { effective_instagram_media_id, effective_object_story_id } =
-                  creativeAsset;
-              const reportAd = reportAds[index];
+            const graph: Graph = {
+                date_start: g.date_start,
+                date_stop: g.date_stop,
 
-              if (effective_instagram_media_id) {
-                  const igMedia = await api.getInstagramMedia(effective_instagram_media_id);
+                spend,
+                impressions,
+                clicks,
+                cpc: g.cpc,
+                ctr: g.ctr,
+                cpm: g.cpm,
+                cpp: g.cpp,
+                reach: g.reach,
+                purchase_roas: g.purchase_roas?.[0]?.value || 0,
+                purchases,
+                add_to_cart,
+                initiated_checkouts,
+                conversion_value,
 
-                  reportAd.thumbnailUrl =
-                      igMedia.media_type === "IMAGE" && !igMedia.thumbnail_url
-                          ? igMedia.media_url
-                          : igMedia.thumbnail_url;
-                  reportAd.sourceUrl = igMedia.permalink;
-              } else if(effective_object_story_id) {
-                  const postId = effective_object_story_id.split("_")[1];
+                cost_per_purchase: purchases > 0 ? (spend / purchases) : 0,
+                cost_per_add_to_cart: add_to_cart > 0 ? (spend / add_to_cart) : 0,
+                conversion_rate: clicks > 0 ? (purchases / clicks) * 100 : 0,
+                engagement: getActionValue("post_engagement") || getActionValue("page_engagement") || 0,
+            };
 
-                  const post = await api.getPost(postId,);
+            return Object.fromEntries(
+                metrics.map((key) => [key, graph[key as keyof Graph]]).filter(([, value]) => value !== undefined)
+            );
+        });
+    }
 
-                  reportAd.thumbnailUrl =
-                      post.adcreatives.data[0].thumbnail_url
+    static determineGraphFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
+        let metrics = selectedMetrics.map(metric => {
+            if (AVAILABLE_GRAPH_METRICS[metric]) {
+                return AVAILABLE_GRAPH_METRICS[metric]
+            }
+            return [metric];
+        }).flat();
+        return [...new Set(metrics)];
+    }
 
-                  reportAd.sourceUrl = post.permalink_url || "";
-              }
-          }))
+    private static normalizeCampaigns(campaigns: any[], selectedMetrics: string[]): any[] {
+        const defaultCampaignKeys = ["index", "campaign_name"];
+        const results: Campaign[] = [];
 
+        for (const [index, c] of campaigns.entries()) {
+            const actions = c.actions || [];
 
-      return reportAds;
-  }
+            const getActionValue = (type: string): number =>
+                Number(actions.find((a: any) => a.action_type === type)?.value || 0);
+
+            const getActionMonetaryValue = (type: string): number =>
+                Number(c.action_values?.find((a: any) => a.action_type === type)?.value || 0);
+            
+            const purchases = getActionValue("omni_purchase");
+            const add_to_cart = getActionValue("omni_add_to_cart");
+            const initiated_checkouts = getActionValue("initiate_checkout");
+            const conversion_value = getActionMonetaryValue("omni_purchase");
+
+            const entry: Campaign = {
+                index,
+                campaign_name: c.campaign_name,
+                
+                spend: c.spend,
+                impressions: c.impressions,
+                clicks: c.clicks,
+                cpc: c.cpc,
+                ctr: c.ctr,
+                cpm: c.cpm,
+                cpp: c.cpp,
+                reach: c.reach,
+                purchase_roas: c.purchase_roas?.[0]?.value || 0,
+                purchases,
+                add_to_cart,
+                initiated_checkouts,
+                conversion_value,
+
+                cost_per_purchase: purchases > 0 ? (c.spend / purchases) : 0,
+                cost_per_add_to_cart: add_to_cart > 0 ? (c.spend / add_to_cart) : 0,
+                conversion_rate: c.clicks > 0 ? (purchases / c.clicks) * 100 : 0,
+                engagement: getActionValue("post_engagement") || getActionValue("page_engagement") || 0
+            };
+
+            results.push(entry);
+        }
+
+        const finalFields = [...defaultCampaignKeys, ...selectedMetrics];
+        results.forEach((adObject: any) => {
+            Object.keys(adObject).forEach((key: string) => {
+                if (!finalFields.includes(key)) {
+                    delete adObject[key];
+                }
+            });
+        });
+
+        return results;
+    }
+
+    static determineAdsFieldsBasedOnSelectedMetrics(selectedMetrics: string[]): string[] {
+        const metrics = selectedMetrics.map(metric => AVAILABLE_ADS_METRICS[metric]).flat();
+        return [...new Set(metrics)];
+    }
+
+    private static getBest10AdsByROAS(ads: any[], metric: string): any[] {
+        return ads
+            .filter((ad) => ad[metric])
+            .sort((a, b) => {
+                const roasA = parseFloat(a[metric]);
+                const roasB = parseFloat(b[metric]);
+                return roasB - roasA;
+            })
+            .slice(0, 10);
+    }
+
+    private static async processAds(
+        ads: any[],
+        selectedMetrics: string[],
+        organizationUuid: string,
+        accountId: string
+    ) {
+        const defaultAdKeys = ["adId", "adCreativeId", "thumbnailUrl", "sourceUrl"];
+        const shownAds = this.getBest10AdsByROAS(ads, "impressions");
+        const api = await FacebookApi.create(organizationUuid, accountId);
+
+        const reportAds = shownAds.map((ad) => {
+            const getActionValue = (type: string) =>
+                ad.actions?.find((a: any) => a.action_type === type)?.value ?? "0";
+
+            const getActionMonetaryValue = (type: string): number =>
+                Number(ad.action_values?.find((a: any) => a.action_type === type)?.value || 0);
+
+            const purchases = getActionValue("omni_purchase");
+            const add_to_cart = getActionValue("omni_add_to_cart");
+            const initiated_checkouts = getActionValue("initiate_checkout");
+            const conversion_value = getActionMonetaryValue("omni_purchase");
+
+            const adObject: Ad = {
+                adId: ad.ad_id,
+                adCreativeId: "",
+                thumbnailUrl: "",
+                sourceUrl: "",
+                
+                spend: ad.spend,
+                impressions: ad.impressions,
+                clicks: ad.clicks,
+                cpc: ad.cpc,
+                ctr: ad.ctr,
+                cpm: ad.cpm,
+                cpp: ad.cpp,
+                reach: ad.reach,
+                purchase_roas: ad.purchase_roas?.[0]?.value || 0,
+                purchases,
+                add_to_cart,
+                initiated_checkouts,
+                conversion_value,
+
+                cost_per_purchase: purchases > 0 ? (ad.spend / purchases) : 0,
+                cost_per_add_to_cart: add_to_cart > 0 ? (ad.spend / add_to_cart) : 0,
+                conversion_rate: ad.clicks > 0 ? (purchases / ad.clicks) * 100 : 0,
+                engagement: getActionValue("post_engagement") || getActionValue("page_engagement") || 0
+            };
+
+            return adObject;
+        });
+
+        const adIds = shownAds.map((a) => a.ad_id).filter(Boolean);
+        const adEntities = await api.getEntitiesBatch(adIds, ["id", "creative{id}"]);
+
+        const creativeIds = adEntities
+          .map((ad: { creative: { id: any } }) => ad.creative?.id)
+          .filter((id: any): id is string => !!id);
+
+        const creativeAssets = await api.getEntitiesBatch(creativeIds, [
+            "id",
+            "effective_instagram_media_id",
+            "effective_object_story_id",
+            "thumbnail_url",
+            "instagram_permalink_url"
+        ]);
+
+        reportAds.forEach((reportAd) => {
+            const adEntity = adEntities.find(
+              (a: { id: any }) => a.id === reportAd.adId,
+            );
+            reportAd.adCreativeId = adEntity?.creative?.id || null;
+        });
+
+        await Promise.all(reportAds.map(async (reportAd) => {
+            const creativeAsset = creativeAssets.find(
+              (c: { id: string }) => c.id === reportAd.adCreativeId,
+            );
+            if (!creativeAsset) return;
+
+            const {
+                effective_instagram_media_id,
+                effective_object_story_id,
+                thumbnail_url,
+                instagram_permalink_url
+            } = creativeAsset;
+
+            if (effective_instagram_media_id) {
+                const igMedia = await api.getInstagramMedia(effective_instagram_media_id);
+                reportAd.thumbnailUrl = igMedia.media_type === "IMAGE" && !igMedia.thumbnail_url
+                    ? igMedia.media_url
+                    : igMedia.thumbnail_url;
+                reportAd.sourceUrl = igMedia.permalink;
+            } else if (effective_object_story_id) {
+                const postId = effective_object_story_id.split("_")[1];
+                const post = await api.getPost(postId);
+                reportAd.thumbnailUrl = post.adcreatives?.data?.[0]?.thumbnail_url || thumbnail_url || "";
+                reportAd.sourceUrl = post.permalink_url || instagram_permalink_url || "";
+            } else {
+                reportAd.thumbnailUrl = thumbnail_url || "";
+            }
+        }));
+        
+        const finalFields = [...defaultAdKeys, ...selectedMetrics];
+        reportAds.forEach((adObject: any) => {
+            Object.keys(adObject).forEach((key: string) => {
+                if (!finalFields.includes(key)) {
+                    delete adObject[key];
+                }
+            });
+        });
+
+        return reportAds;
+    }
 }

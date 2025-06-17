@@ -44,7 +44,8 @@ export class ReportsService {
                   accountId: client?.accountId,
                   reviewNeeded: scheduleOption.reviewNeeded,
                   datePreset: scheduleOption.datePreset,
-                  timeZone: scheduleOption.timeZone
+                  timeZone: scheduleOption.timeZone,
+                  metrics: scheduleOption.metrics as {     ads?: string[];     kpis?: string[];     graphs?: string[];     campaigns?: string[]; }
               },
               cronExpression,
           );
@@ -59,7 +60,7 @@ export class ReportsService {
 
           await database.em.persistAndFlush(schedule);
 
-          return cronExpression;
+          return schedule.uuid;
       }catch (e) {
           logger.error(e);
       }
