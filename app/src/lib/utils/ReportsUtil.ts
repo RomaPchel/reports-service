@@ -117,6 +117,9 @@ export class ReportsUtil {
         targetType: 'report',
         targetUuid: report.uuid,
         clientUuid: client.uuid,
+        metadata: {
+          frequency: ""
+        },
         actor: 'system'
       });
 
