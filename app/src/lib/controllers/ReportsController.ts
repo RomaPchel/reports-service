@@ -2,8 +2,11 @@ import Router from "koa-router";
 import type { Context } from "koa";
 import { ReportsService } from "../services/ReportsService.js";
 import { User } from "marklie-ts-core";
-import type { ReportScheduleRequest } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
-import { AVAILABLE_ADS_METRICS, AVAILABLE_CAMPAIGN_METRICS, AVAILABLE_GRAPH_METRICS, AVAILABLE_KPI_METRICS } from "lib/utils/FacebookDataUtil.js";
+import {
+  AVAILABLE_ADS_METRICS, AVAILABLE_CAMPAIGN_METRICS,
+  AVAILABLE_GRAPH_METRICS, AVAILABLE_KPI_METRICS,
+  type ReportScheduleRequest
+} from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 
 export class ReportsController extends Router {
   private readonly reportsService: ReportsService;
