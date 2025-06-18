@@ -112,11 +112,11 @@ export class ReportsUtil {
       await PubSubWrapper.publishMessage(topic, payload);
 
       const log = database.em.create(ActivityLog, {
-        organizationUuid: client.organization.uuid,
+        organization: client.organization.uuid,
         action: 'report_generated',
         targetType: 'report',
         targetUuid: report.uuid,
-        clientUuid: client.uuid,
+        client: client.uuid,
         metadata: {
           frequency: ""
         },
