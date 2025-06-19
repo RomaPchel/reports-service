@@ -60,7 +60,6 @@ export class ReportsUtil {
 
       logger.info("Fetched all report Data.")
 
-
       const report = database.em.create(Report, {
         organization: client.organization,
         client: client,
@@ -70,6 +69,11 @@ export class ReportsUtil {
         metadata: {
           datePreset: data.datePreset,
           reviewNeeded: data.reviewNeeded,
+          metricsSelections: this.convertMetrics(data.metrics),
+          loomLink: "",
+          aiGeneratedContent: "",
+          userReportDescription: "",
+          messages: data.messages
         },
       });
 
@@ -80,27 +84,32 @@ export class ReportsUtil {
 
       logger.info("Generating PDF.")
 
-      const pdfBuffer = await this.generateReportPdf(report.uuid);
+      let publicPdfUrl = "";
 
-      const filePath = this.generateFilePath(client.uuid, data.datePreset);
-      const gcs = GCSWrapper.getInstance('marklie-client-reports');
+      if (!data.reviewNeeded) {
+        const pdfBuffer = await this.generateReportPdf(report.uuid);
 
-      const publicUrl = await gcs.uploadBuffer(
-          pdfBuffer,
-          filePath,
-          'application/pdf',
-          false,
-          false
-      );
+        const filePath = this.generateFilePath(client.uuid, data.datePreset);
+        const gcs = GCSWrapper.getInstance('marklie-client-reports');
 
-      report.gcsUrl = publicUrl;
-      await database.em.flush();
+        publicPdfUrl = await gcs.uploadBuffer(
+            pdfBuffer,
+            filePath,
+            'application/pdf',
+            false,
+            false
+        );
+
+        report.gcsUrl = publicPdfUrl;
+        await database.em.flush();
+      }
 
       const payload = {
-        reportUrl: publicUrl,
+        reportUrl: data.reviewNeeded ? "" : publicPdfUrl,
         clientUuid: client.uuid,
         organizationUuid: client.organization.uuid,
         reportUuid: report.uuid,
+        messages: data.messages
       };
 
       const topic = data.reviewNeeded
@@ -134,6 +143,39 @@ export class ReportsUtil {
       }
       return { success: false };
     }
+  }
+
+  static convertMetrics(inputObject: Record<string, string[]>): Record<string, {name: string, enabled: boolean, order: number}[]> {
+    // Initialize an empty object to store the converted result.
+    const convertedObject: Record<string, {name: string, enabled: boolean, order: number}[]> = {};
+  
+    // Iterate over each key-value pair in the inputObject.
+    for (const key in inputObject) {
+      // Ensure the key belongs to the object itself and not its prototype chain.
+      if (Object.prototype.hasOwnProperty.call(inputObject, key)) {
+        // Get the array of strings associated with the current key.
+        const stringArray = inputObject[key];
+  
+        // Create a new empty object to store the boolean mapped values for the current key.
+        const metricsList: {name: string, enabled: boolean, order: number}[] = [];
+  
+        // Iterate over each string in the stringArray.
+        stringArray.forEach(str => {
+          // Assign 'true' to the string as a key in the mappedObject.
+          metricsList.push({
+            name: str,
+            enabled: true,
+            order: 0,
+          });
+        });
+  
+        // Assign the newly created mappedObject to the corresponding key in the convertedObject.
+        convertedObject[key] = metricsList;
+      }
+    }
+  
+    // Return the final converted object.
+    return convertedObject;
   }
 
   private static async generateReportPdf(reportUuid: string): Promise<Buffer> {

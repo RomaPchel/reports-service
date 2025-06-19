@@ -45,7 +45,8 @@ export class ReportsService {
                   reviewNeeded: scheduleOption.reviewNeeded,
                   datePreset: scheduleOption.datePreset,
                   timeZone: scheduleOption.timeZone,
-                  metrics: scheduleOption.metrics
+                  metrics: scheduleOption.metrics,
+                  messages: scheduleOption.messages
               },
               cronExpression,
           );
@@ -102,7 +103,8 @@ export class ReportsService {
                   reviewNeeded: scheduleOption.reviewNeeded,
                   datePreset: scheduleOption.datePreset,
                   timeZone: scheduleOption.timeZone,
-                  metrics: scheduleOption.metrics
+                  metrics: scheduleOption.metrics,
+                  messages: scheduleOption.messages
               },
               cronExpression,
           );
