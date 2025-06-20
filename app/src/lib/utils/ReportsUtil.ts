@@ -14,6 +14,7 @@ import puppeteer from "puppeteer";
 import type {
   ReportJobData,
   ReportScheduleRequest,
+  SchedulingOptionMetrics,
 } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import {AxiosError} from "axios";
 import {FacebookDataUtil} from "./FacebookDataUtil.js";
@@ -60,7 +61,6 @@ export class ReportsUtil {
 
       logger.info("Fetched all report Data.")
 
-
       const report = database.em.create(Report, {
         organization: client.organization,
         client: client,
@@ -70,6 +70,11 @@ export class ReportsUtil {
         metadata: {
           datePreset: data.datePreset,
           reviewNeeded: data.reviewNeeded,
+          metricsSelections: this.convertMetrics(data.metrics),
+          loomLink: "",
+          aiGeneratedContent: "",
+          userReportDescription: "",
+          messages: data.messages
         },
       });
 
@@ -80,27 +85,32 @@ export class ReportsUtil {
 
       logger.info("Generating PDF.")
 
-      const pdfBuffer = await this.generateReportPdf(report.uuid);
+      let publicPdfUrl = "";
 
-      const filePath = this.generateFilePath(client.uuid, data.datePreset);
-      const gcs = GCSWrapper.getInstance('marklie-client-reports');
+      if (!data.reviewNeeded) {
+        const pdfBuffer = await this.generateReportPdf(report.uuid);
 
-      const publicUrl = await gcs.uploadBuffer(
-          pdfBuffer,
-          filePath,
-          'application/pdf',
-          false,
-          false
-      );
+        const filePath = this.generateFilePath(client.uuid, data.datePreset);
+        const gcs = GCSWrapper.getInstance('marklie-client-reports');
 
-      report.gcsUrl = publicUrl;
-      await database.em.flush();
+        publicPdfUrl = await gcs.uploadBuffer(
+            pdfBuffer,
+            filePath,
+            'application/pdf',
+            false,
+            false
+        );
+
+        report.gcsUrl = publicPdfUrl;
+        await database.em.flush();
+      }
 
       const payload = {
-        reportUrl: publicUrl,
+        reportUrl: data.reviewNeeded ? "" : publicPdfUrl,
         clientUuid: client.uuid,
         organizationUuid: client.organization.uuid,
         reportUuid: report.uuid,
+        messages: data.messages
       };
 
       const topic = data.reviewNeeded
@@ -112,11 +122,11 @@ export class ReportsUtil {
       await PubSubWrapper.publishMessage(topic, payload);
 
       const log = database.em.create(ActivityLog, {
-        organizationUuid: client.organization.uuid,
+        organization: client.organization.uuid,
         action: 'report_generated',
         targetType: 'report',
         targetUuid: report.uuid,
-        clientUuid: client.uuid,
+        client: client.uuid,
         metadata: {
           frequency: ""
         },
@@ -134,6 +144,31 @@ export class ReportsUtil {
       }
       return { success: false };
     }
+  }
+
+  static convertMetrics(inputObject: SchedulingOptionMetrics): Record<string, {name: string, enabled: boolean, order: number}[]> {
+    const convertedObject: Record<string, {name: string, enabled: boolean, order: number}[]> = {};
+  
+    for (const key in inputObject) {
+      if (Object.prototype.hasOwnProperty.call(inputObject, key)) {
+
+        const stringArray: string[] = inputObject[key as "kpis" | "graphs" | "ads" | "campaigns"].metrics.map(m => m.name);
+  
+        const metricsList: {name: string, enabled: boolean, order: number}[] = [];
+  
+        stringArray.forEach((str: string) => {
+          metricsList.push({
+            name: str,
+            enabled: true,
+            order: 0,
+          });
+        });
+  
+        convertedObject[key] = metricsList;
+      }
+    }
+  
+    return convertedObject;
   }
 
   private static async generateReportPdf(reportUuid: string): Promise<Buffer> {

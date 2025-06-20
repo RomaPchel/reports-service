@@ -3,7 +3,8 @@ import {
     type Ad,
     AVAILABLE_ADS_METRICS,
     AVAILABLE_CAMPAIGN_METRICS, AVAILABLE_GRAPH_METRICS, AVAILABLE_KPI_METRICS, type AvailableKpiMetric,
-    type AvailableMetrics, type Campaign, type Graph, type KPIs, type ReportData
+    type AvailableMetrics, type Campaign, type Graph, type KPIs, type ReportData,
+    type SchedulingOptionMetrics
 } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 
 
@@ -23,26 +24,26 @@ export class FacebookDataUtil {
         organizationUuid: string,
         accountId: string,
         datePreset: string,
-        metrics: AvailableMetrics
+        metrics: SchedulingOptionMetrics
     ): Promise<ReportData> {
         const api = await FacebookApi.create(organizationUuid, accountId);
 
         const fetches: Record<string, Promise<any[]>> = {};
 
-        const selectedKpiMetrics: string[] = metrics.kpis?.length ? metrics.kpis : [];
+        const selectedKpiMetrics: string[] = metrics.kpis?.metrics?.length ? metrics.kpis.metrics.map(m => m.name) : [];
         const kpiApiFields = this.determineKpisFieldsBasedOnSelectedMetrics(selectedKpiMetrics);
 
-        const selectedAdsMetrics: string[] = metrics.ads?.length ? metrics.ads : [];
+        const selectedAdsMetrics: string[] = metrics.ads?.metrics?.length ? metrics.ads.metrics.map(m => m.name) : [];
         const adsApiFields = this.determineAdsFieldsBasedOnSelectedMetrics(selectedAdsMetrics);
 
         const obligatoryGraphsMetrics = ["date_start", "date_stop"];
-        const selectedGraphsMetrics = metrics.graphs?.length ? 
-            [ ...metrics.graphs, ...obligatoryGraphsMetrics ] : [];
+        const selectedGraphsMetrics = metrics.graphs?.metrics?.length ? 
+            [ ...metrics.graphs.metrics.map(m => m.name), ...obligatoryGraphsMetrics ] : [];
         const graphApiFields = this.determineGraphFieldsBasedOnSelectedMetrics(selectedGraphsMetrics);
 
         const obligatoryCampaignMetrics = ["campaign_id", "campaign_name"];
-        const campaignMetrics = metrics.campaigns?.length ? 
-            [ ...metrics.campaigns, ...obligatoryCampaignMetrics ] : [];
+        const campaignMetrics = metrics.campaigns?.metrics?.length ? 
+            [ ...metrics.campaigns.metrics.map(m => m.name), ...obligatoryCampaignMetrics ] : [];
         const campaignApiFields = this.determineCampaignFieldsBasedOnSelectedMetrics(campaignMetrics);
 
         if (selectedKpiMetrics.length) fetches.KPIs = api.getInsightsSmart("account", kpiApiFields, { datePreset });
@@ -51,7 +52,7 @@ export class FacebookDataUtil {
 
         if (selectedGraphsMetrics.length) fetches.graphs = api.getInsightsSmart("account", graphApiFields, { datePreset, timeIncrement: 1 });
 
-        if (metrics.campaigns?.length) fetches.campaigns = api.getInsightsSmart("campaign", campaignApiFields, { datePreset });
+        if (metrics.campaigns?.metrics?.length) fetches.campaigns = api.getInsightsSmart("campaign", campaignApiFields, { datePreset });
 
         const resolved = await Promise.all(
             Object.entries(fetches).map(([key, promise]) =>
