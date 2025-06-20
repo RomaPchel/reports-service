@@ -14,6 +14,7 @@ import puppeteer from "puppeteer";
 import type {
   ReportJobData,
   ReportScheduleRequest,
+  SchedulingOptionMetrics,
 } from "marklie-ts-core/dist/lib/interfaces/ReportsInterfaces.js";
 import {AxiosError} from "axios";
 import {FacebookDataUtil} from "./FacebookDataUtil.js";
@@ -145,7 +146,7 @@ export class ReportsUtil {
     }
   }
 
-  static convertMetrics(inputObject: Record<string, string[]>): Record<string, {name: string, enabled: boolean, order: number}[]> {
+  static convertMetrics(inputObject: SchedulingOptionMetrics): Record<string, {name: string, enabled: boolean, order: number}[]> {
     // Initialize an empty object to store the converted result.
     const convertedObject: Record<string, {name: string, enabled: boolean, order: number}[]> = {};
   
@@ -154,7 +155,7 @@ export class ReportsUtil {
       // Ensure the key belongs to the object itself and not its prototype chain.
       if (Object.prototype.hasOwnProperty.call(inputObject, key)) {
         // Get the array of strings associated with the current key.
-        const stringArray = inputObject[key];
+        const stringArray = inputObject[key as "kpis" | "graphs" | "ads" | "campaigns"].metrics.map(m => m.name);
   
         // Create a new empty object to store the boolean mapped values for the current key.
         const metricsList: {name: string, enabled: boolean, order: number}[] = [];
