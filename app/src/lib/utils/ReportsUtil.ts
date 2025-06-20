@@ -147,22 +147,16 @@ export class ReportsUtil {
   }
 
   static convertMetrics(inputObject: SchedulingOptionMetrics): Record<string, {name: string, enabled: boolean, order: number}[]> {
-    // Initialize an empty object to store the converted result.
     const convertedObject: Record<string, {name: string, enabled: boolean, order: number}[]> = {};
   
-    // Iterate over each key-value pair in the inputObject.
     for (const key in inputObject) {
-      // Ensure the key belongs to the object itself and not its prototype chain.
       if (Object.prototype.hasOwnProperty.call(inputObject, key)) {
-        // Get the array of strings associated with the current key.
-        const stringArray = inputObject[key as "kpis" | "graphs" | "ads" | "campaigns"].metrics.map(m => m.name);
+
+        const stringArray: string[] = inputObject[key as "kpis" | "graphs" | "ads" | "campaigns"].metrics.map(m => m.name);
   
-        // Create a new empty object to store the boolean mapped values for the current key.
         const metricsList: {name: string, enabled: boolean, order: number}[] = [];
   
-        // Iterate over each string in the stringArray.
-        stringArray.forEach(str => {
-          // Assign 'true' to the string as a key in the mappedObject.
+        stringArray.forEach((str: string) => {
           metricsList.push({
             name: str,
             enabled: true,
@@ -170,12 +164,10 @@ export class ReportsUtil {
           });
         });
   
-        // Assign the newly created mappedObject to the corresponding key in the convertedObject.
         convertedObject[key] = metricsList;
       }
     }
   
-    // Return the final converted object.
     return convertedObject;
   }
 

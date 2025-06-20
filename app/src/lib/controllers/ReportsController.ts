@@ -19,6 +19,7 @@ export class ReportsController extends Router {
   private setUpRoutes() {
     this.get("/available-metrics", this.getAvailableMetrics.bind(this));
     this.get("/:uuid", this.getReport.bind(this));
+    this.get("/", this.getReports.bind(this));
     this.post("/schedule", this.scheduleReport.bind(this));
     this.get("/scheduling-option/:uuid", this.getSchedulingOption.bind(this));
     this.put(
@@ -31,6 +32,13 @@ export class ReportsController extends Router {
     const uuid = ctx.params.uuid as string;
 
     ctx.body = await this.reportsService.getReport(uuid);
+    ctx.status = 200;
+  }
+
+  private async getReports(ctx: Context) {
+    const user = ctx.state.user as User;
+
+    ctx.body = await this.reportsService.getReports(user.activeOrganization.uuid);
     ctx.status = 200;
   }
 

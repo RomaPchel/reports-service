@@ -5,30 +5,6 @@ import { Log } from "marklie-ts-core/dist/lib/classes/Logger.js";
 const database = await Database.getInstance();
 const logger = Log.getInstance().extend("facebook-api");
 
-export const FacebookMetricPresets = {
-  kpis: [
-    'account_name', 'account_id', 'spend', 'impressions', 'clicks', 'cpc', 'ctr', 'actions', 'action_values', 'purchase_roas', 'reach'
-  ],
-  adPerformance: [
-    'id', 'ad_id', 'name', 'status', 'campaign_id', 'adset_id', 'account_id',
-    'created_time', 'updated_time', 'effective_status', 'configured_status',
-    'creative{id,name,thumbnail_url,object_story_id,effective_object_story_id}',
-    'spend', 'purchase_roas',
-    'insights.date_preset(last_90d){date_start,date_stop,impressions,clicks,spend,reach,frequency,cpc,ctr,cpm,cpp,actions{action_type,value},action_values{action_type,value},purchase_roas{action_type,value}}'
-  ],
-  campaigns: [
-    'campaign_id',
-    'campaign_name',
-    'spend',
-    'impressions',
-    'clicks',
-    'ctr',
-    'actions'
-  ],
-  adInsights: [
-    'ad_id', 'impressions', 'clicks', 'spend', 'actions', 'action_values', 'purchase_roas'
-  ]
-};
 
 export class FacebookApi {
   private readonly MAX_POLL_ATTEMPTS = 100;

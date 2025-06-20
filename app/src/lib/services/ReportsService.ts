@@ -57,6 +57,7 @@ export class ReportsService {
           schedule.timezone = scheduleOption.timeZone;
           schedule.datePreset = scheduleOption.datePreset;
           schedule.bullJobId = job.id as string;
+          schedule.reportName = scheduleOption.reportName;
           schedule.nextRun = ReportsUtil.getNextRunDate(scheduleOption).toJSDate();
 
           await database.em.persistAndFlush(schedule);
@@ -130,6 +131,13 @@ export class ReportsService {
   ) {
     return database.em.findOne(Report, {uuid: uuid});
   }
+
+    async getReports(uuid: string) {
+        return database.em.find(Report,
+            { organization: uuid },
+            { populate: ['client'] }
+        );
+    }
 
   async getSchedulingOption(uuid: string ) {
     return database.em.findOne(SchedulingOption, {uuid: uuid});
